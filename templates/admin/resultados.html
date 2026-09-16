@@ -1,0 +1,102 @@
+{% extends "admin/layout.html" %}
+{% set active = 'resultados' %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-bold text-slate-800">Resultados</h1>
+    <p class="mt-0.5 text-sm text-slate-500">
+      {% if vista == 'temporada' %}Ranking de temporada (suma de eventos − penalizaciones)
+      {% else %}Ranking de un evento individual (sin restar penalizaciones){% endif %}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    {% if vista == 'evento' and evento %}
+    <a href="{{ url_for('admin_exportar', vista='evento', evento_id=evento.id, formato='excel') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Excel</a>
+    <a href="{{ url_for('admin_exportar', vista='evento', evento_id=evento.id, formato='pdf') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">PDF</a>
+    {% elif vista == 'temporada' %}
+    <a href="{{ url_for('admin_exportar', vista='temporada', temporada=temporada, formato='excel') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Excel</a>
+    <a href="{{ url_for('admin_exportar', vista='temporada', temporada=temporada, formato='pdf') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">PDF</a>
+    {% endif %}
+    <a href="{{ url_for('admin_mostrar_resultado') }}" class="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-800">Proyectar pantalla</a>
+  </div>
+</div>
+
+<form method="get" class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+  <div class="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm font-medium">
+    <a href="{{ url_for('admin_resultados', vista='temporada') }}" class="rounded-md px-3 py-1.5 {{ 'bg-white text-cyan-800 shadow-sm' if vista == 'temporada' else 'text-slate-500' }}">Temporada {{ temporada }}</a>
+    <a href="{{ url_for('admin_resultados', vista='evento') }}" class="rounded-md px-3 py-1.5 {{ 'bg-white text-cyan-800 shadow-sm' if vista == 'evento' else 'text-slate-500' }}">Por evento</a>
+  </div>
+  {% if vista == 'evento' %}
+  <select name="evento_id" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-cyan-500" onchange="window.location='{{ url_for('admin_resultados', vista='evento') }}&evento_id='+this.value">
+    <option value="">Selecciona un evento…</option>
+    {% for e in db.eventos %}<option value="{{ e.id }}" {{ 'selected' if evento and evento.id == e.id }}>{{ e.nombre }} ({{ e.puntaje_maximo }} pts)</option>{% endfor %}
+  </select>
+  {% endif %}
+  <span class="ml-auto text-xs text-slate-400">
+    {% if vista == 'temporada' %}Las penalizaciones se restan del acumulado de temporada.{% else %}Los puntos de penalización no afectan el ranking del evento.{% endif %}
+  </span>
+</form>
+
+{% if vista == 'evento' and not evento %}
+<div class="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">Selecciona un evento para ver su ranking.</div>
+{% elif vista == 'evento' %}
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h3 class="font-semibold text-slate-800">{{ evento.nombre }}</h3>
+    <p class="text-xs text-slate-400">Puntaje máximo {{ evento.puntaje_maximo }} pts · {{ fmt_fecha(evento.fecha) }} · {{ 'Cerrado' if evento.cerrado else 'Abierto' }}</p>
+    <div class="mt-1.5 flex flex-wrap gap-1.5">
+      {% for c in criterios_ev %}<span class="rounded-full bg-cyan-100 px-2.5 py-0.5 text-xs font-medium text-cyan-800">{{ c.nombre }} · {{ c.peso }}%</span>{% endfor %}
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <th class="px-4 py-3">#</th><th class="px-4 py-3">Club</th>
+        {% for c in criterios_ev %}<th class="px-3 py-3 text-right">{{ c.nombre }}</th>{% endfor %}
+        <th class="px-3 py-3 text-right">% pond.</th><th class="px-4 py-3 text-right">Puntaje</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in ranking_ev %}
+        <tr>
+          <td class="px-4 py-3 font-semibold {{ 'text-amber-500' if r.posicion == 1 else ('text-slate-400' if r.posicion == 2 else ('text-orange-400' if r.posicion == 3 else 'text-slate-400')) }}">{{ r.posicion }}°</td>
+          <td class="px-4 py-3 font-medium text-slate-700">
+            {{ r.club.nombre }}
+            {% if r.empatado %}<div class="text-[11px] text-amber-600">⚖ Empate (criterio de mayor peso)</div>{% endif %}
+          </td>
+          {% for c in criterios_ev %}<td class="px-3 py-3 text-right text-slate-600">{{ r.evaluacion.valores.get(c.id) or '—' }}</td>{% endfor %}
+          <td class="px-3 py-3 text-right text-slate-600">{{ '%.1f'|format(r.porcentaje) }}%</td>
+          <td class="px-4 py-3 text-right font-bold text-slate-800">{{ fmt_pts(r.puntaje) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <th class="px-4 py-3">#</th><th class="px-4 py-3">Club</th>
+        {% for e in ranking.eventos %}<th class="px-3 py-3 text-right">{{ e.nombre.split(' ')[:2]|join(' ') }}</th>{% endfor %}
+        <th class="px-3 py-3 text-right">Bruto</th><th class="px-3 py-3 text-right">Pen.</th><th class="px-4 py-3 text-right">Total</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for f in ranking.filas %}
+        <tr>
+          <td class="px-4 py-3 font-semibold {{ 'text-amber-500' if f.posicion == 1 else ('text-slate-400' if f.posicion == 2 else ('text-orange-400' if f.posicion == 3 else 'text-slate-400')) }}">{{ f.posicion }}°</td>
+          <td class="px-4 py-3 font-medium text-slate-700">{{ f.club.nombre }}</td>
+          {% for e in ranking.eventos %}
+          <td class="px-3 py-3 text-right text-slate-600">{{ fmt_pts(f.por_evento[e.id]) if f.por_evento.get(e.id) else '—' }}</td>
+          {% endfor %}
+          <td class="px-3 py-3 text-right font-medium text-slate-700">{{ fmt_pts(f.bruto) }}</td>
+          <td class="px-3 py-3 text-right text-rose-600">{% if f.penalizaciones %}−{{ fmt_pts(f.penalizaciones) }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3 text-right font-bold text-slate-800">{{ fmt_pts(f.puntaje) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

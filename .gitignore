@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Base de datos local (se regenera con datos de ejemplo al arrancar)
+scoreup.db
+*.sqlite3
+
+# Archivos subidos por los usuarios
+static/uploads/*.png
+static/uploads/*.jpg
+static/uploads/*.jpeg
+static/uploads/*.gif
+static/uploads/*.webp
+
+# Entorno / editor
+.env
+.idea/
+.vscode/
+.DS_Store

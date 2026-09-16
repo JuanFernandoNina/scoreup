@@ -1,0 +1,60 @@
+{% extends "admin/layout.html" %}
+{% set active = 'penalizaciones' %}
+{% block content %}
+<div class="mb-5 flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-bold text-slate-800">Penalizaciones aplicadas</h1>
+    <p class="mt-0.5 text-sm text-slate-500">Descuentos del total acumulado de temporada</p>
+  </div>
+  <a href="{{ url_for('admin_motivos') }}" class="text-sm font-medium text-cyan-700 hover:underline">Ver catálogo de motivos →</a>
+</div>
+
+<form method="get" class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+  <select name="evento" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-cyan-500">
+    <option value="">Todos los eventos</option>
+    {% for e in db.eventos %}<option value="{{ e.id }}" {{ 'selected' if filtros.get('evento') == e.id }}>{{ e.nombre }}</option>{% endfor %}
+  </select>
+  <select name="club" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-cyan-500">
+    <option value="">Todos los clubes</option>
+    {% for c in db.clubs %}<option value="{{ c.id }}" {{ 'selected' if filtros.get('club') == c.id }}>{{ c.nombre }}</option>{% endfor %}
+  </select>
+  <select name="staff" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-cyan-500">
+    <option value="">Todo el staff</option>
+    {% for s in db.users if s.rol == 'staff' %}<option value="{{ s.id }}" {{ 'selected' if filtros.get('staff') == s.id }}>{{ s.nombre }}</option>{% endfor %}
+  </select>
+  <button class="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs text-white">Filtrar</button>
+</form>
+
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  {% set lista = db.penalizaciones %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+        <th class="px-4 py-3">Fecha</th><th class="px-4 py-3">Club</th><th class="px-4 py-3">Evento</th>
+        <th class="px-4 py-3">Staff</th><th class="px-4 py-3">Motivo</th><th class="px-4 py-3">Descuento</th><th class="px-4 py-3 text-right"></th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for p in lista %}
+        {% set club = db.clubs | selectattr('id','equalto', p.club_id) | first %}
+        {% set evento = db.eventos | selectattr('id','equalto', p.evento_id) | first %}
+        {% set staff = db.users | selectattr('id','equalto', p.usuario_id) | first %}
+        {% set motivo = db.motivos | selectattr('id','equalto', p.motivo_id) | first %}
+        <tr>
+          <td class="px-4 py-3 text-slate-500">{{ fmt_fecha(p.fecha) }}</td>
+          <td class="px-4 py-3 font-medium text-slate-700">{{ club.nombre if club else '—' }}</td>
+          <td class="px-4 py-3 text-slate-500">{{ evento.nombre if evento else '—' }}</td>
+          <td class="px-4 py-3 text-slate-500">{{ staff.nombre if staff else '—' }}</td>
+          <td class="px-4 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{{ motivo.nombre if motivo else '—' }}</span></td>
+          <td class="px-4 py-3 font-semibold text-rose-600">−{{ fmt_pts(motivo.puntos_descuento) if motivo else 0 }}</td>
+          <td class="px-4 py-3 text-right">
+            <form method="post" action="{{ url_for('admin_penalizacion_anular', penalizacion_id=p.id) }}" onsubmit="return confirm('¿Anular esta penalización?')">
+              <button class="text-xs text-slate-300 hover:text-amber-600">Anular</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

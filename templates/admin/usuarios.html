@@ -1,0 +1,138 @@
+{% extends "admin/layout.html" %}
+{% set active = 'usuarios' %}
+{% block content %}
+<div class="mb-5">
+  <h1 class="text-xl font-bold text-slate-800">Usuarios</h1>
+  <p class="mt-0.5 text-sm text-slate-500">Crea cuentas de Staff y Directores para que puedan ingresar a la plataforma.</p>
+</div>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <!-- Crear Staff -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 class="font-semibold text-slate-800">Crear Staff</h2>
+    <p class="mt-0.5 text-xs text-slate-400">El Staff evalúa clubes y reporta incidentes y penalizaciones en su evento.</p>
+    <form method="post" action="{{ url_for('admin_usuario_nuevo') }}" class="mt-3 space-y-2">
+      <input type="hidden" name="rol" value="staff" />
+      <input name="nombre" required placeholder="Nombre completo" class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+      <div class="grid gap-2 sm:grid-cols-2">
+        <input name="username" required placeholder="Usuario" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+        <input name="password" required minlength="4" placeholder="Contraseña" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+      </div>
+      <select name="evento_id" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500">
+        <option value="">Evento asignado…</option>
+        {% for e in db.eventos|sort(attribute='fecha', reverse=True) %}
+        <option value="{{ e.id }}">{{ e.nombre }} (Temporada {{ e.temporada }})</option>
+        {% endfor %}
+      </select>
+      <button class="w-full rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">Crear Staff</button>
+    </form>
+  </div>
+
+  <!-- Crear Director -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 class="font-semibold text-slate-800">Crear Director</h2>
+    <p class="mt-0.5 text-xs text-slate-400">El Director solo ve su club y los eventos ya realizados.</p>
+    <form method="post" action="{{ url_for('admin_usuario_nuevo') }}" class="mt-3 space-y-2">
+      <input type="hidden" name="rol" value="director" />
+      <input name="nombre" required placeholder="Nombre completo" class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+      <div class="grid gap-2 sm:grid-cols-2">
+        <input name="username" required placeholder="Usuario" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+        <input name="password" required minlength="4" placeholder="Contraseña" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
+      </div>
+      <select name="club_id" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500">
+        <option value="">Club asignado…</option>
+        {% for c in db.clubs %}
+        {% set ya = db.users | selectattr('rol','equalto','director') | selectattr('club_id','equalto', c.id) | list | length > 0 %}
+        <option value="{{ c.id }}" {{ 'disabled' if ya }}>{{ c.nombre }}{{ ' (ya tiene director)' if ya }}</option>
+        {% endfor %}
+      </select>
+      <button class="w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Crear Director</button>
+    </form>
+  </div>
+</div>
+
+<!-- Importar desde Excel -->
+<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="font-semibold text-slate-800">Importar usuarios desde Excel</h2>
+      <p class="mt-0.5 text-xs text-slate-400">
+        Columnas: <b>nombre</b> | <b>username</b> | <b>password</b> | <b>evento</b> (Staff) o <b>club</b> (Director).
+        El evento/club debe coincidir con el nombre exacto registrado.
+      </p>
+      <div class="mt-2 flex flex-wrap gap-2 text-xs">
+        <a href="{{ url_for('plantilla_usuarios', rol='staff') }}" class="rounded-lg bg-cyan-50 px-3 py-1.5 font-medium text-cyan-700 hover:bg-cyan-100">Descargar plantilla Staff</a>
+        <a href="{{ url_for('plantilla_usuarios', rol='director') }}" class="rounded-lg bg-emerald-50 px-3 py-1.5 font-medium text-emerald-700 hover:bg-emerald-100">Descargar plantilla Director</a>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('admin_usuarios_importar') }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+      <select name="rol" required class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500">
+        <option value="">Rol…</option>
+        <option value="staff">Staff</option>
+        <option value="director">Director</option>
+      </select>
+      <input type="file" name="archivo" accept=".xlsx,.xlsm" required class="text-sm text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200" />
+      <button class="rounded-lg bg-cyan-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-cyan-800">Importar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Listado -->
+<div class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  <div class="border-b border-slate-200 px-5 py-3">
+    <h2 class="font-semibold text-slate-800">Usuarios de la organización ({{ usuarios|length }})</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-slate-200 bg-slate-50">
+        <tr>
+          <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Nombre</th>
+          <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Usuario</th>
+          <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Rol</th>
+          <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Asignado a</th>
+          <th class="px-4 py-2 text-right text-xs uppercase tracking-wide text-slate-500">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for u in usuarios %}
+        <tr>
+          <td class="px-4 py-2.5 font-medium text-slate-700">{{ u.nombre }}</td>
+          <td class="px-4 py-2.5 font-mono text-xs text-slate-500">{{ u.username }}</td>
+          <td class="px-4 py-2.5">
+            {% if u.rol == 'admin' %}
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Admin</span>
+            {% elif u.rol == 'staff' %}
+            <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-800">Staff</span>
+            {% else %}
+            <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Director</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2.5 text-xs text-slate-500">
+            {% if u.rol == 'staff' %}
+              {% set ev = db.eventos | selectattr('id','equalto', u.evento_id) | first %}
+              {{ ev.nombre if ev else '— sin evento' }}
+            {% elif u.rol == 'director' %}
+              {% set cl = db.clubs | selectattr('id','equalto', u.club_id) | first %}
+              {{ cl.nombre if cl else '— sin club' }}
+            {% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2.5">
+            <div class="flex items-center justify-end gap-2">
+              <form method="post" action="{{ url_for('admin_usuario_password', user_id=u.id) }}" class="flex items-center gap-1" title="Cambiar contraseña">
+                <input name="password" required minlength="4" placeholder="Nueva clave" class="w-28 rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-cyan-500" />
+                <button class="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600 hover:bg-slate-200">Cambiar</button>
+              </form>
+              {% if u.rol != 'admin' %}
+              <form method="post" action="{{ url_for('admin_usuario_eliminar', user_id=u.id) }}" onsubmit="return confirm('¿Eliminar el usuario {{ u.nombre }}?')">
+                <button class="rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-500 hover:bg-rose-50">Eliminar</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

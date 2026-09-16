@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}ScoreUp · Crear cuenta{% endblock %}
+{% block body %}
+<div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 p-4">
+  <div class="w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl lg:p-10">
+    <div class="mb-6 flex items-center gap-3 text-cyan-800">
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white font-black">S</div>
+      <div>
+        <span class="text-lg font-bold">ScoreUp</span>
+        <div class="text-xs text-slate-400">Crear cuenta de Administrador</div>
+      </div>
+    </div>
+
+    <h1 class="text-2xl font-bold text-slate-800">Crea tu cuenta y tu organización</h1>
+    <p class="mt-1 text-sm text-slate-500">Solo el rol <b>Admin</b> puede auto-registrarse. Staff y Director son creados por el admin.</p>
+
+    {% if error %}<div class="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ error }}</div>{% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      <div>
+        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre completo</label>
+        <input name="nombre" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="Ej. Juan Pérez" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre de organización</label>
+        <input name="organizacion" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="Ej. Club de Conquistadores Esperanza" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Usuario</label>
+        <input name="username" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="Tu usuario para iniciar sesión" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Contraseña</label>
+        <input name="password" type="password" required minlength="4" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="Mínimo 4 caracteres" />
+      </div>
+      <button type="submit" class="w-full rounded-xl bg-cyan-700 py-2.5 font-semibold text-white shadow transition hover:bg-cyan-800">Crear cuenta y organización</button>
+    </form>
+
+    <p class="mt-5 text-center text-sm text-slate-500">
+      ¿Ya tienes cuenta?
+      <a href="{{ url_for('login') }}" class="font-semibold text-cyan-700 hover:underline">Iniciar sesión</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "admin/layout.html" %}
+{% set active = 'clubes' %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-bold text-slate-800">Clubes</h1>
+    <p class="mt-0.5 text-sm text-slate-500">Gestiona los clubes de tu organización y sus miembros</p>
+  </div>
+  <form method="post" class="flex gap-2">
+    <input name="nombre" required placeholder="Nombre del nuevo club" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-cyan-600" />
+    <button class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">Nuevo club</button>
+  </form>
+</div>
+
+<div class="space-y-4">
+  {% for club in db.clubs %}
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50 font-semibold text-cyan-700">{{ club.miembros|length }}</div>
+        <div>
+          <h3 class="font-semibold text-slate-800">{{ club.nombre }}</h3>
+          <p class="text-xs text-slate-400">{{ club.miembros|length }} miembro(s)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('admin_club_miembros', club_id=club.id) }}" class="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-800">Ver miembros</a>
+        <form method="post" action="{{ url_for('admin_club_editar', club_id=club.id) }}" class="flex gap-1">
+          <input name="nombre" value="{{ club.nombre }}" class="w-36 rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-cyan-500" />
+          <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">Guardar</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_club_eliminar', club_id=club.id) }}" onsubmit="return confirm('¿Eliminar el club {{ club.nombre }}? Se quitarán sus miembros, participaciones, evaluaciones y penalizaciones.')">
+          <button class="rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-500 hover:bg-rose-50">Eliminar</button>
+        </form>
+      </div>
+    </div>
+    {% if club.miembros %}
+    <div class="mt-4 flex flex-wrap gap-2">
+      {% for m in club.miembros[:8] %}
+      <span class="flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+        {{ m.nombre.split(' ')[0] }} <span class="text-cyan-700">{{ m.categoria }}</span>
+      </span>
+      {% endfor %}
+      {% if club.miembros|length > 8 %}
+      <a href="{{ url_for('admin_club_miembros', club_id=club.id) }}" class="rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs text-slate-500 hover:border-cyan-300">+{{ club.miembros|length - 8 }} más…</a>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="mt-4 text-sm text-slate-400">Este club aún no tiene miembros.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

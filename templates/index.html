@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}ScoreUp · Plataforma de evaluación de clubes{% endblock %}
+{% block body %}
+<!-- Hero -->
+<header class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 text-white">
+  <div class="absolute inset-0 opacity-20"
+       style="background-image: radial-gradient(circle at 20% 30%, rgba(6,182,212,.5) 0, transparent 30%), radial-gradient(circle at 80% 70%, rgba(16,185,129,.4) 0, transparent 30%);"></div>
+  <div class="relative mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-24">
+    <nav class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-xl font-black">S</div>
+        <div>
+          <div class="text-lg font-bold">ScoreUp</div>
+          <div class="text-xs text-cyan-100">Plataforma organizacional</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('login') }}" class="rounded-xl px-4 py-2 text-sm font-medium text-white hover:bg-white/10">Iniciar sesión</a>
+        <a href="{{ url_for('registro') }}" class="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-400">Crear cuenta</a>
+      </div>
+    </nav>
+
+    <div class="mt-16 grid items-center gap-10 lg:mt-24 lg:grid-cols-[1.1fr_1fr]">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-cyan-100">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Demo interactiva (Flask)
+        </span>
+        <h1 class="mt-5 text-4xl font-extrabold leading-tight lg:text-5xl">
+          Evalúa a tus clubes y construye rankings por temporada
+        </h1>
+        <p class="mt-4 max-w-xl text-base text-slate-300">
+          ScoreUp organiza las evaluaciones de tus eventos, gestiona incidentes y penalizaciones,
+          y calcula automáticamente el ranking de tu organización. Con roles claros para Admins,
+          Staff y Directores de club.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="{{ url_for('registro') }}" class="rounded-xl bg-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:bg-cyan-400">Crear mi cuenta de Admin</a>
+          <a href="{{ url_for('login') }}" class="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">Ya tengo cuenta</a>
+        </div>
+        <p class="mt-4 text-xs text-slate-400">Incluye cuentas de demostración listas para probar cada rol.</p>
+      </div>
+
+      <!-- Tarjeta de ejemplo de ranking -->
+      <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="font-semibold text-white">Ranking · Temporada 2026</h2>
+          <span class="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-300">En vivo</span>
+        </div>
+        <div class="space-y-2.5">
+          {% set demo = [('Tigres del Valle', 645, '1'), ('Águilas del Norte', 610, '2'), ('Leones de la Montaña', 582, '3'), ('Halcones del Sur', 540, '4'), ('Zorros del Bosque', 498, '5')] %}
+          {% for nombre, pts, pos in demo %}
+          <div class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold {{ 'bg-amber-400 text-slate-900' if pos == '1' else 'bg-white/15 text-white' }}">{{ pos }}</div>
+            <div class="flex-1 text-sm font-medium text-white">{{ nombre }}</div>
+            <div class="text-sm font-bold text-cyan-300">{{ pts }} pts</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Qué es -->
+<section class="mx-auto max-w-6xl px-4 py-16 lg:px-6">
+  <div class="max-w-3xl">
+    <h2 class="text-2xl font-bold text-slate-800">¿Qué es ScoreUp?</h2>
+    <p class="mt-3 text-slate-500">
+      Es una plataforma web para organizaciones de clubes (conquistadores, scouts y similares).
+      El Admin crea eventos, define criterios de evaluación con pesos y asigna staff y clubes participantes.
+      Los Staff evalúan a cada club, reportan incidentes y aplican penalizaciones. Los resultados se
+      convierten en un ranking por temporada que los Directores pueden consultar.
+    </p>
+  </div>
+
+  <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-lg">📊</div>
+      <h3 class="mt-4 font-semibold text-slate-800">Evaluaciones ponderadas</h3>
+      <p class="mt-1.5 text-sm text-slate-500">Criterios con peso (%) definidos por el Admin. La calificación del Staff principal es la oficial.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-lg">⚠️</div>
+      <h3 class="mt-4 font-semibold text-slate-800">Incidentes y penalizaciones</h3>
+      <p class="mt-1.5 text-sm text-slate-500">Reporta incidentes con foto y aplica penalizaciones por motivos configurables.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-lg">🏆</div>
+      <h3 class="mt-4 font-semibold text-slate-800">Rankings por temporada</h3>
+      <p class="mt-1.5 text-sm text-slate-500">Ranking automático por evento y por temporada, exportable a Excel y PDF.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Roles -->
+<section class="bg-white py-16">
+  <div class="mx-auto max-w-6xl px-4 lg:px-6">
+    <h2 class="text-center text-2xl font-bold text-slate-800">Roles de la plataforma</h2>
+    <p class="mx-auto mt-2 max-w-xl text-center text-sm text-slate-500">Cada rol ingresa con su propio panel y ve solo lo que le corresponde.</p>
+    <div class="mt-10 grid gap-4 lg:grid-cols-3">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-white font-black">A</div>
+          <div>
+            <div class="font-semibold text-slate-800">Admin</div>
+            <div class="text-xs text-slate-400">Organización</div>
+          </div>
+        </div>
+        <p class="mt-4 text-sm text-slate-600">Crea clubes, eventos, criterios y usuarios (Staff y Directores). Gestiona incidentes, penalizaciones y resultados.</p>
+      </div>
+      <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white font-black">S</div>
+          <div>
+            <div class="font-semibold text-slate-800">Staff</div>
+            <div class="text-xs text-slate-400">Evento asignado</div>
+          </div>
+        </div>
+        <p class="mt-4 text-sm text-slate-600">Evalúa a los clubes de su evento, reporta incidentes y aplica penalizaciones.</p>
+      </div>
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white font-black">D</div>
+          <div>
+            <div class="font-semibold text-slate-800">Director</div>
+            <div class="text-xs text-slate-400">Club</div>
+          </div>
+        </div>
+        <p class="mt-4 text-sm text-slate-600">Consulta solo su club y los resultados de los eventos ya realizados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Cómo funciona -->
+<section class="mx-auto max-w-6xl px-4 py-16 lg:px-6">
+  <h2 class="text-center text-2xl font-bold text-slate-800">¿Cómo funciona?</h2>
+  <div class="mt-10 grid gap-4 lg:grid-cols-4">
+    {% set pasos = [
+      ('1', 'Crea tu organización', 'Regístrate como Admin y crea tu organización con sus clubes y miembros.'),
+      ('2', 'Diseña los eventos', 'Crea eventos, define criterios de evaluación con sus pesos y asigna clubes participantes.'),
+      ('3', 'Invita a evaluar', 'Genera accesos o crea usuarios Staff y Directores. El Staff evalúa cada club.'),
+      ('4', 'Revisa los resultados', 'El sistema calcula el ranking del evento y de la temporada automáticamente.'),
+    ] %}
+    {% for n, titulo, texto in pasos %}
+    <div class="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-700 font-bold text-white">{{ n }}</div>
+      <h3 class="mt-4 font-semibold text-slate-800">{{ titulo }}</h3>
+      <p class="mt-1.5 text-sm text-slate-500">{{ texto }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-12 rounded-3xl bg-gradient-to-br from-cyan-700 to-cyan-900 p-8 text-center text-white lg:p-12">
+    <h2 class="text-2xl font-bold">Empieza ahora, es gratis</h2>
+    <p class="mx-auto mt-2 max-w-lg text-sm text-cyan-100">Crea la cuenta de Admin de tu organización en menos de un minuto y comienza a organizar tus eventos.</p>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <a href="{{ url_for('registro') }}" class="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">Crear mi cuenta de Admin</a>
+      <a href="{{ url_for('login') }}" class="rounded-xl border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">Probar con cuentas demo</a>
+    </div>
+  </div>
+</section>
+
+<footer class="border-t border-slate-200 bg-white py-8">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 lg:px-6">
+    <div class="flex items-center gap-2">
+      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-700 text-sm font-black text-white">S</div>
+      <span class="text-sm font-bold text-slate-700">ScoreUp</span>
+      <span class="text-xs text-slate-400">Demo interactiva · Proyecto Programación</span>
+    </div>
+    <div class="flex gap-4 text-sm text-slate-500">
+      <a href="{{ url_for('login') }}" class="hover:text-cyan-700">Iniciar sesión</a>
+      <a href="{{ url_for('registro') }}" class="hover:text-cyan-700">Crear cuenta</a>
+    </div>
+  </div>
+</footer>
+{% endblock %}

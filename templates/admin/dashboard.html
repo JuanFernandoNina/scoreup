@@ -1,0 +1,49 @@
+{% extends "admin/layout.html" %}
+{% set active = 'dashboard' %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-xl font-bold text-slate-800">Hola, bienvenido de nuevo</h1>
+  <p class="mt-0.5 text-sm text-slate-500">{{ db.organizacion.nombre }} · Temporada {{ db.eventos[0].temporada if db.eventos else '2026' }}</p>
+</div>
+
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-2xl font-bold text-slate-800">{{ db.clubs|length }}</div><div class="mt-1 text-xs font-medium text-slate-500">Clubes</div></div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-2xl font-bold text-slate-800">{{ total_miembros }}</div><div class="mt-1 text-xs font-medium text-slate-500">Miembros registrados</div></div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-2xl font-bold text-amber-600">{{ activos|length }}</div><div class="mt-1 text-xs font-medium text-slate-500">Eventos abiertos</div></div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-2xl font-bold text-violet-600">{{ staff_evento }}</div><div class="mt-1 text-xs font-medium text-slate-500">Staff con acceso</div></div>
+</div>
+
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="font-semibold text-slate-800">Eventos recientes</h2>
+      <a href="{{ url_for('admin_eventos') }}" class="text-xs font-medium text-cyan-700 hover:underline">Ver todos →</a>
+    </div>
+    {% for e in db.eventos|sort(attribute='fecha', reverse=True) %}
+    <div class="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2.5 mb-2">
+      <div><div class="text-sm font-medium text-slate-700">{{ e.nombre }}</div><div class="text-xs text-slate-400">{{ fmt_fecha(e.fecha) }} · {{ e.lugar }}</div></div>
+      <div class="text-right"><div class="text-xs text-slate-400">Puntaje máx</div><div class="text-sm font-semibold text-slate-700">{{ e.puntaje_maximo }} pts</div></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="font-semibold text-slate-800">Próximos eventos</h2>
+      <span class="rounded-full bg-cyan-100 px-2.5 py-0.5 text-xs font-semibold text-cyan-800">{{ proximos|length }}</span>
+    </div>
+    {% if proximos|length == 0 %}<p class="text-sm text-slate-400">No hay eventos próximos.</p>
+    {% else %}
+      {% for e in proximos[:4] %}
+      <div class="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2.5 mb-2">
+        <div>
+          <div class="text-sm font-medium text-slate-700">{{ e.nombre }}</div>
+          <div class="text-xs text-slate-400 capitalize">{{ e.tipo }} · {{ e.lugar }}</div>
+        </div>
+        <span class="text-xs font-semibold text-cyan-700">{{ fmt_fecha(e.fecha) }}</span>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
