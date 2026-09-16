@@ -1,7 +1,7 @@
 # ScoreUp — Sistema de Evaluación de Clubes de Conquistadores
 
 <p align="center">
-  <img src="image/panel.png" alt="ScoreUp - Vista principal del panel" width="800"/>
+  <img src="image/portal.png" alt="ScoreUp - Vista principal del panel" width="800"/>
 </p>
 
 > Plataforma web para registrar, evaluar y calificar el desempeño de clubes de Conquistadores (y organizaciones similares) en eventos y temporadas.
