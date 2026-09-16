@@ -149,8 +149,8 @@ def login():
             if u.username.lower() == username and _verificar_clave(u.password, password):
                 session["user_id"] = u.id
                 return redirect(url_for(f"panel_{u.rol}"))
-        return render_template("login.html", error="Usuario o contraseña incorrectos.", users=DB["users"])
-    return render_template("login.html", error=None, users=DB["users"])
+        return render_template("login.html", error="Usuario o contraseña incorrectos.")
+    return render_template("login.html", error=None)
 
 
 @app.route("/registro", methods=["GET", "POST"])
@@ -164,11 +164,11 @@ def registro():
         password = request.form.get("password", "")
         org_nombre = request.form.get("organizacion", "").strip()
         if not (nombre and username and password and org_nombre):
-            return render_template("registro.html", error="Completa todos los campos.", users=DB["users"])
+            return render_template("registro.html", error="Completa todos los campos.")
         if len(password) < 4:
-            return render_template("registro.html", error="La contraseña debe tener al menos 4 caracteres.", users=DB["users"])
+            return render_template("registro.html", error="La contraseña debe tener al menos 4 caracteres.")
         if any(u.username.lower() == username for u in DB["users"]):
-            return render_template("registro.html", error="Ese nombre de usuario ya está en uso.", users=DB["users"])
+            return render_template("registro.html", error="Ese nombre de usuario ya está en uso.")
         org_id = new_id("org")
         DB["organizaciones"].append({
             "id": org_id,
@@ -180,7 +180,7 @@ def registro():
         session["user_id"] = admin.id
         flash("¡Cuenta de Admin y organización creadas correctamente!", "ok")
         return redirect(url_for("panel_admin"))
-    return render_template("registro.html", error=None, users=DB["users"])
+    return render_template("registro.html", error=None)
 
 
 @app.route("/logout")
