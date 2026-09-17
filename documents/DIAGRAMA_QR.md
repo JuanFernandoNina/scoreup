@@ -67,12 +67,19 @@ sequenceDiagram
     end
     S->>S: verifica que el staff pertenezca al evento<br/>y que el club participe en él
     alt Club YA evaluado
-        S-->>Staff: Aviso "Este club ya fue evaluado"<br/>(solo lectura, NO puede evaluar)
+        alt El scanner ES el evaluador que la guardó y evento abierto
+            S-->>Staff: Panel de evaluación (modo edición: puede CORREGIR su nota)
+            Staff->>S: Guardar corrección
+            S->>S: genera un REPORTE para el admin → apartado "Reportes"
+            S-->>Staff: Confirmación ✓ (nota actualizada)
+        else Es otro staff / club ya cerrado
+            S-->>Staff: Aviso "Este club ya fue evaluado" (solo lectura, NO puede evaluar)
+        end
     else Club sin evaluar
         S-->>Staff: Panel de evaluación SOLO de ese club (criterios, sliders 0-100, comentario)
         Staff->>S: Guardar evaluación
         S->>S: queda registrada como la ÚNICA evaluación (oficial)
-        S-->>Staff: Confirmación ✓ (ya no se puede volver a evaluar)
+        S-->>Staff: Confirmación ✓
     end
 ```
 
@@ -166,3 +173,4 @@ classDiagram
 4. Empates en ranking: se compara el criterio de mayor peso.
 5. **Duración del QR:** el QR es del club, no del staff ni del evento; puede tener vigencia (p.ej. se desactiva al cerrar el evento).
 6. **Total temporada = Σ puntajes de eventos − penalizaciones/sanciones** (fórmula final, sin cambios).
+7. 🔔 **NUEVA (correcciones):** si el staff **corrige** su evaluación mientras el evento está **abierto**, el sistema genera **automáticamente una notificación en el apartado "Reportes"** del admin (club, staff, cambio, fecha). El admin puede **marcar revisado** o **descartar**. Esto NO altera la nota vigente ni el ranking: la nota oficial sigue siendo la única evaluación (la última corrección guardada).
