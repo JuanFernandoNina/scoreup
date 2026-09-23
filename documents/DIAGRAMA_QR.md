@@ -4,13 +4,13 @@
 
 ## Cambio de flujo (resumen)
 
-| | Antes | Ahora |
-|---|---|---|
-| Club ↔ Staff | Admin asigna `staff_principal_id` a cada club del evento | El QR del club identifica a qué club evaluar |
-| Creación de staff | Se asigna nombre, usuario, contraseña y clubes | Solo nombre, usuario, contraseña y evento |
-| Evaluación | El staff entra al panel y elige/clica el club | El staff **escanea el QR** del club y evalúa ese club |
-| Evaluación oficial | Solo la del staff principal | El club se evalúa **una sola vez** (quien escanea y guarda primero) |
-| Total temporada | Σ puntajes de eventos − penalizaciones | **Sin cambios** (se mantiene la fórmula) |
+|                     | Antes                                                     | Ahora                                                                     |
+| ------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Club ↔ Staff       | Admin asigna`staff_principal_id` a cada club del evento | El QR del club identifica a qué club evaluar                             |
+| Creación de staff  | Se asigna nombre, usuario, contraseña y clubes           | Solo nombre, usuario, contraseña y evento                                |
+| Evaluación         | El staff entra al panel y elige/clica el club             | El staff**escanea el QR** del club y evalúa ese club               |
+| Evaluación oficial | Solo la del staff principal                               | El club se evalúa**una sola vez** (quien escanea y guarda primero) |
+| Total temporada     | Σ puntajes de eventos − penalizaciones                  | **Sin cambios** (se mantiene la fórmula)                           |
 
 ---
 
@@ -156,12 +156,12 @@ classDiagram
 
 ## Rutas nuevas / modificadas
 
-| Ruta | Método | Descripción |
-|---|---|---|
-| `/qr/<token>` | GET | Valida token, gestiona login pendiente y redirige al panel enfocado |
-| `/admin/clubes/<id>/qr` | GET | Descarga/imprime la tarjeta QR del club |
-| `/staff` | GET | Acepta `?club=<id>` para enfocar la evaluación de ese club |
-| `POST /staff/evaluar/<club_id>` | POST | Sin cambios; el primer guardado marca notar oficial |
+| Ruta                              | Método | Descripción                                                        |
+| --------------------------------- | ------- | ------------------------------------------------------------------- |
+| `/qr/<token>`                   | GET     | Valida token, gestiona login pendiente y redirige al panel enfocado |
+| `/admin/clubes/<id>/qr`         | GET     | Descarga/imprime la tarjeta QR del club                             |
+| `/staff`                        | GET     | Acepta`?club=<id>` para enfocar la evaluación de ese club        |
+| `POST /staff/evaluar/<club_id>` | POST    | Sin cambios; el primer guardado marca notar oficial                 |
 
 ---
 

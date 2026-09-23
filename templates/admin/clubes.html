@@ -25,6 +25,7 @@
       </div>
       <div class="flex items-center gap-2">
         <a href="{{ url_for('admin_club_miembros', club_id=club.id) }}" class="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-800">Ver miembros</a>
+        <a href="{{ url_for('admin_club_qr', club_id=club.id) }}" title="Imprimir QR de la mesa" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50" download>Imprimir QR</a>
         <form method="post" action="{{ url_for('admin_club_editar', club_id=club.id) }}" class="flex gap-1">
           <input name="nombre" value="{{ club.nombre }}" class="w-36 rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-cyan-500" />
           <button class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">Guardar</button>

@@ -213,9 +213,86 @@ def admin_clubes():
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
         if nombre:
-            DB["clubs"].append(seed_data.Club(new_id("club"), nombre, user.organizacion_id, []))
+            club = seed_data.Club(new_id("club"), nombre, user.organizacion_id, [])
+            club.qr_token = _firmar_qr(club.organizacion_id, club.id)
+            DB["clubs"].append(club)
         return redirect(url_for("admin_clubes"))
     return render_template("admin/clubes.html", user=user, db=db_org(user))
+
+
+# --------------------------------------------------------------------------
+# QR por club (escaneo en la mesa)
+# --------------------------------------------------------------------------
+
+def _firma_qr():
+    from itsdangerous import URLSafeTimedSerializer
+    return URLSafeTimedSerializer(os.environ.get("SECRET_KEY", "scoreup-demo-insegura"))
+
+
+def _firmar_qr(org_id, club_id):
+    """Token firmado {organizacion, club} que se imprime en el QR de la mesa."""
+    from itsdangerous import BadSignature, SignatureExpired
+    return _firma_qr().dumps({"og": org_id, "cl": club_id})
+
+
+def _validar_qr(token):
+    """Devuelve (org_id, club_id) si el token es válido, o None.
+    Funciona con tokens firmados (clubes en vivo) y con los tokens planos
+    del seed, resolviéndolos por lookup inverso del qr_token almacenado."""
+    if not token:
+        return None
+    club = find(DB, "clubs", "qr_token", token)
+    if club:
+        return club.organizacion_id, club.id
+    try:
+        payload = _firma_qr().loads(token, max_age=86400 * 365)
+        return str(payload.get("og")), str(payload.get("cl"))
+    except Exception:
+        return None
+
+
+@app.route("/qr/<token>")
+def qr_club(token):
+    datos = _validar_qr(token)
+    if not datos:
+        return render_template("qr_invalido.html", user=None), 404
+    org_id, club_id = datos
+    if "user_id" not in session:
+        session["next_qr"] = token
+        return redirect(url_for("login"))
+    user = find(DB, "users", "id", session["user_id"])
+    if not user or user.organizacion_id != org_id:
+        session["next_qr"] = token
+        return redirect(url_for("login"))
+    if user.rol == "staff":
+        return redirect(url_for("panel_staff", club=club_id))
+    flash("El QR de evaluación solo lo puede usar el staff.", "warn")
+    return redirect(url_for("panel_index" if hasattr(locals(), "panel_index") else "login"))
+
+
+@app.route("/admin/clubes/<club_id>/qr")
+def admin_club_qr(club_id):
+    """RF-QR: Admin descarga el QR imprimible de la mesa del club."""
+    user = require_rol("admin")
+    club = find(DB, "clubs", "id", club_id)
+    if not club or club.organizacion_id != user.organizacion_id:
+        abort(404)
+    token = club.qr_token or _firmar_qr(club.organizacion_id, club.id)
+    club.qr_token = token
+    base = os.environ.get("SCOREUP_PUBLIC_BASE") or request.url_root.rstrip("/")
+    url = base + url_for("qr_club", token=token)
+    try:
+        import io
+        import segno
+        qr = segno.make(url)
+        buf = io.BytesIO()
+        qr.save(buf, kind="svg", scale=4, border=1, dark="#0f172a")
+        buf.seek(0)
+        return send_file(buf, mimetype="image/svg+xml",
+                         download_name="qr-{}.svg".format(club.nombre.replace(" ", "_")))
+    except Exception:
+        return render_template("admin/error_qr.html", user=user, club=club,
+                               url=url, qr_token=token), 500
 
 
 @app.route("/admin/clubes/<club_id>/editar", methods=["POST"])
@@ -1051,6 +1128,9 @@ def panel_staff():
         return render_template("staff/sin_evento.html", user=user)
     criterios = [c for c in DB["criterios"] if c.evento_id == evento.id]
     ecs = [x for x in DB["evento_club"] if x.evento_id == evento.id]
+    foco = request.args.get("club")
+    if foco:
+        ecs = [x for x in ecs if x.club_id == foco]
     # por club: propia evaluación (si existe) + si es principal
     estados = []
     for ec in ecs:
@@ -1063,7 +1143,7 @@ def panel_staff():
             "oficial": evaluacion_principal(DB, evento, ec.club_id),
         })
     return render_template("staff/panel.html", user=user, evento=evento, criterios=criterios,
-                           estados=estados, db=DB, fmt_pts=fmt_pts)
+                           estados=estados, db=DB, fmt_pts=fmt_pts, foco=foco)
 
 
 @app.route("/staff/evaluar/<club_id>", methods=["POST"])
@@ -1251,4 +1331,6 @@ def admin_importar_miembros(club_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host=os.environ.get("SCOREUP_HOST", "0.0.0.0"),
+            debug=os.environ.get("SCOREUP_DEBUG", "1") == "1",
+            use_reloader=False, port=int(os.environ.get("SCOREUP_PORT", "5000")))

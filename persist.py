@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS organizaciones (
 );
 CREATE TABLE IF NOT EXISTS clubs (
     id TEXT PRIMARY KEY, nombre TEXT NOT NULL, organizacion_id TEXT NOT NULL,
-    miembros TEXT NOT NULL
+    miembros TEXT NOT NULL, qr_token TEXT
 );
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY, organizacion_id TEXT NOT NULL, nombre TEXT NOT NULL,
@@ -78,6 +78,10 @@ def _init_schema():
     conn = _conn()
     try:
         conn.executescript(SCHEMA)
+        # Migración: DBs creadas con el schema previo no tienen qr_token.
+        col_qr = [r[1] for r in conn.execute("PRAGMA table_info(clubs)").fetchall()]
+        if "qr_token" not in col_qr:
+            conn.execute("ALTER TABLE clubs ADD COLUMN qr_token TEXT")
         conn.commit()
     finally:
         conn.close()
@@ -107,9 +111,9 @@ def save(db):
             [(o["id"], o["nombre"], o["fecha_creacion"]) for o in db["organizaciones"]],
         )
         cur.executemany(
-            "INSERT INTO clubs (id, nombre, organizacion_id, miembros) VALUES (?,?,?,?)",
+            "INSERT INTO clubs (id, nombre, organizacion_id, miembros, qr_token) VALUES (?,?,?,?,?)",
             [(c.id, c.nombre, c.organizacion_id,
-              json.dumps([vars(m) for m in c.miembros])) for c in db["clubs"]],
+              json.dumps([vars(m) for m in c.miembros]), c.qr_token) for c in db["clubs"]],
         )
         cur.executemany(
             "INSERT INTO users (id, organizacion_id, nombre, username, password, rol, evento_id, club_id) "
@@ -181,7 +185,8 @@ def load():
         ]
         clubs = [
             Club(r["id"], r["nombre"], r["organizacion_id"],
-                 [Miembro(**m) for m in json.loads(r["miembros"])])
+                 [Miembro(**m) for m in json.loads(r["miembros"])],
+                 qr_token=r["qr_token"])
             for r in cur.execute("SELECT * FROM clubs").fetchall()
         ]
         users = [

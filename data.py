@@ -20,6 +20,7 @@ class Club:
     nombre: str
     organizacion_id: str
     miembros: list = field(default_factory=list)
+    qr_token: str = None  # token firmado {organizacion, club} del QR impreso en la mesa
 
 
 @dataclass
@@ -182,11 +183,11 @@ def seed():
     organizacion = {"id": "org-1", "nombre": "Asociación Central de Conquistadores", "fecha_creacion": "2024-01-15"}
 
     clubs = [
-        Club("club-1", "Tigres del Valle", "org-1", _miembros_club1()),
-        Club("club-2", "Águilas del Norte", "org-1", _miembros_club2()),
-        Club("club-3", "Halcones del Sur", "org-1", _miembros_club3()),
-        Club("club-4", "Leones de la Montaña", "org-1", _miembros_club4()),
-        Club("club-5", "Zorros del Bosque", "org-1", _miembros_club5()),
+        Club("club-1", "Tigres del Valle", "org-1", _miembros_club1(), "qr-org1-club1"),
+        Club("club-2", "Águilas del Norte", "org-1", _miembros_club2(), "qr-org1-club2"),
+        Club("club-3", "Halcones del Sur", "org-1", _miembros_club3(), "qr-org1-club3"),
+        Club("club-4", "Leones de la Montaña", "org-1", _miembros_club4(), "qr-org1-club4"),
+        Club("club-5", "Zorros del Bosque", "org-1", _miembros_club5(), "qr-org1-club5"),
     ]
 
     users = [
