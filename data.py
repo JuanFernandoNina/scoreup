@@ -72,6 +72,8 @@ class Evaluacion:
     comentario: str = ""
     fecha: str = ""
     valores: dict = field(default_factory=dict)
+    oficial: bool = True
+    version: int = 1
 
 
 @dataclass
@@ -93,6 +95,7 @@ class PenalizacionAplicada:
     motivo_id: str
     comentario: str = ""
     fecha: str = ""
+    puntos: float = None
 
 
 @dataclass
@@ -261,6 +264,12 @@ def seed():
         Incidente("inc-3", "ev-2", "user-staff3", "salud", "leve", "Una asistente presentó una quemadura solar leve; atendida sin mayores consecuencias.", "resuelto", None, None, "2026-03-22 12:05"),
     ]
 
+    for evaluacion in evaluaciones:
+        ec = next(x for x in evento_club if x.evento_id == evaluacion.evento_id and x.club_id == evaluacion.club_id)
+        evaluacion.oficial = evaluacion.evaluador_id == ec.staff_principal_id
+    for penalizacion in penalizaciones:
+        penalizacion.puntos = next(m.puntos_descuento for m in motivos if m.id == penalizacion.motivo_id)
+
     return {
         "organizacion": organizacion,
         "organizaciones": [organizacion],
@@ -273,4 +282,5 @@ def seed():
         "motivos": motivos,
         "penalizaciones": penalizaciones,
         "incidentes": incidentes,
+        "correcciones": [],
     }

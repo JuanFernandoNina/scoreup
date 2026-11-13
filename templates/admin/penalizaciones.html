@@ -26,7 +26,6 @@
 </form>
 
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-  {% set lista = db.penalizaciones %}
   <div class="overflow-x-auto">
     <table class="w-full text-left text-sm">
       <thead><tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
@@ -45,11 +44,12 @@
           <td class="px-4 py-3 text-slate-500">{{ evento.nombre if evento else '—' }}</td>
           <td class="px-4 py-3 text-slate-500">{{ staff.nombre if staff else '—' }}</td>
           <td class="px-4 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{{ motivo.nombre if motivo else '—' }}</span></td>
-          <td class="px-4 py-3 font-semibold text-rose-600">−{{ fmt_pts(motivo.puntos_descuento) if motivo else 0 }}</td>
+          <td class="px-4 py-3 font-semibold text-rose-600">−{{ fmt_pts(p.puntos if p.puntos is not none else (motivo.puntos_descuento if motivo else 0)) }}</td>
           <td class="px-4 py-3 text-right">
-            <form method="post" action="{{ url_for('admin_penalizacion_anular', penalizacion_id=p.id) }}" onsubmit="return confirm('¿Anular esta penalización?')">
+            {% if evento and not evento.cerrado %}<form method="post" action="{{ url_for('admin_penalizacion_anular', penalizacion_id=p.id) }}" onsubmit="return confirm('¿Anular esta penalización?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="text-xs text-slate-300 hover:text-amber-600">Anular</button>
-            </form>
+            </form>{% endif %}
           </td>
         </tr>
         {% endfor %}

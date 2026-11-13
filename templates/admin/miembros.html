@@ -1,0 +1,7 @@
+{% extends 'admin/layout.html' %}
+{% from 'admin/icons.html' import icon %}
+{% set active = 'miembros' %}
+{% block content %}
+<div class="mg-page-heading"><div><h1>Miembros</h1><p>Consulta los miembros de todos los clubes de tu organización.</p></div><a href="{{ url_for('admin_clubes') }}" class="admin-button">{{ icon('plus') }} Gestionar por club</a></div>
+<section class="mg-table-card"><div class="mg-table-scroll"><table class="mg-table" data-search-label="Buscar por nombre, club o categoría…"><thead><tr><th>Miembro</th><th>Club</th><th>Edad</th><th>Cargo</th><th>Ingreso</th><th>Categoría</th><th>Acciones</th></tr></thead><tbody>{% for item in miembros %}{% set m = item.miembro %}<tr><td><div class="mg-entity"><span class="mg-entity-icon">{{ icon('miembros') }}</span><strong>{{ m.nombre }}</strong></div></td><td>{{ item.club.nombre }}</td><td>{{ m.edad if m.edad is not none else '—' }}</td><td>{{ m.cargo or 'Miembro' }}</td><td>{{ m.anio_ingreso or '—' }}</td><td><span class="mg-badge">{{ m.categoria }}</span></td><td><a class="mg-icon-button" href="{{ url_for('admin_club_miembros',club_id=item.club.id) }}" aria-label="Gestionar miembros de {{ item.club.nombre }}" title="Gestionar en su club">{{ icon('eye') }}</a></td></tr>{% endfor %}</tbody></table></div>{% if not miembros %}<div class="mg-empty">No hay miembros registrados. Abre un club para agregar o importar sus miembros.</div>{% endif %}</section>
+{% endblock %}

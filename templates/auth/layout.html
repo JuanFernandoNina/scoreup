@@ -1,0 +1,30 @@
+{% from 'admin/icons.html' import icon %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#245cee">
+  <title>{% block title %}ScoreUp · Acceso{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+  <script defer src="{{ url_for('static', filename='auth.js') }}"></script>
+</head>
+<body class="lp-body auth-body">
+<a class="lp-skip" href="#auth-form">Saltar al formulario</a>
+<div class="auth-background-grid" aria-hidden="true"></div><div class="auth-orb auth-orb-one" aria-hidden="true"></div><div class="auth-orb auth-orb-two" aria-hidden="true"></div>
+<header class="auth-header"><a class="lp-brand" href="{{ url_for('index') }}"><span class="lp-brand-mark"><i></i><i></i><i></i></span>Score<span>Up</span></a><a class="auth-back" href="{{ url_for('index') }}">← Volver al inicio</a></header>
+<main class="auth-main">
+  <section class="auth-story"><span class="lp-eyebrow lp-pill"><span></span> CADA EVENTO CUENTA</span><h2>{% if registro_mode %}El próximo gran<br> encuentro <span>empieza contigo.</span>{% else %}Tu equipo.<br> Tu evento.<br> <span>Todo conectado.</span>{% endif %}</h2><p>{% if registro_mode %}Dale un lugar a tus clubes, conecta a tu staff y organiza cada evaluación con claridad.{% else %}Vuelve a lo importante: tus clubes, las evaluaciones y las experiencias que están por venir.{% endif %}</p>
+    <div class="auth-benefits"><span>✓ Evaluación por QR</span><span>✓ Roles claros</span><span>✓ Resultados por temporada</span></div>
+    <div class="auth-illustration" aria-hidden="true"><div class="auth-mini-card"><span class="auth-mini-symbol">{{ icon('eventos') }}</span><small>UN ENCUENTRO MEJOR ORGANIZADO</small><strong>Todo listo para<br>dar el siguiente paso.</strong><div><span>{{ icon('clubes') }} Clubes</span><span>{{ icon('usuarios') }} Staff</span><span>{{ icon('resultados') }} Resultados</span></div><i></i><i></i><i></i></div><div class="auth-floating-note"><span>✓</span><div><strong>Menos planillas. Más experiencias.</strong><small>Organización que se nota en cada evento.</small></div></div><span class="auth-spark">✦</span></div>
+  </section>
+  <section class="auth-card" aria-labelledby="auth-title"><div class="auth-card-heading"><span class="auth-card-icon">{{ icon('plus' if registro_mode else 'usuarios') }}</span><span class="lp-eyebrow">{{ 'TU ORGANIZACIÓN EMPIEZA AQUÍ' if registro_mode else 'QUÉ BUENO TENERTE DE VUELTA' }}</span><h1 id="auth-title">{{ 'Crea tu cuenta.' if registro_mode else 'Iniciar sesión' }}</h1><p>{{ 'Comienza como administrador y reúne a tu equipo.' if registro_mode else 'Ingresa tus datos y continúa en tu espacio.' }}</p></div>
+    {% if error %}<div class="auth-error" role="alert">{{ icon('incidentes') }}<span>{{ error }}</span></div>{% endif %}
+    {% block form %}{% endblock %}
+    <div class="auth-switch">{% if registro_mode %}¿Ya eres parte de ScoreUp? <a href="{{ url_for('login') }}">Iniciar sesión →</a>{% else %}¿Organizas un nuevo encuentro? <a href="{{ url_for('registro') }}">Crear cuenta de Admin →</a>{% endif %}</div>
+  </section>
+</main>
+<footer class="auth-footer"><span>ScoreUp · Evaluaciones claras, eventos mejor organizados.</span><a href="{{ url_for('index') }}#preguntas">¿Tienes alguna duda? →</a></footer>
+<svg class="auth-wave" viewBox="0 0 1440 110" preserveAspectRatio="none" aria-hidden="true"><path fill="#ffffff15" d="M0 35Q180 120 360 50T720 60T1080 40T1440 60V110H0Z"/><path fill="#ffffff20" d="M0 75Q180 20 360 80T720 78T1080 65T1440 70V110H0Z"/></svg>
+</body>
+</html>

@@ -22,12 +22,12 @@ def puntaje_evento(evaluacion, criterios, puntaje_maximo):
 
 
 def evaluacion_principal(db, evento, club_id):
-    """Evaluación del Staff principal para un club en un evento (solo esa cuenta)."""
+    """Única evaluación oficial por club y evento (respaldos antiguos excluidos)."""
     ec = _find(db["evento_club"], evento.id, club_id)
-    if ec is None or ec.staff_principal_id is None:
+    if ec is None:
         return None
     for e in db["evaluaciones"]:
-        if (e.evento_id == evento.id and e.club_id == club_id and e.evaluador_id == ec.staff_principal_id):
+        if e.evento_id == evento.id and e.club_id == club_id and e.oficial:
             return e
     return None
 
@@ -94,13 +94,12 @@ def _with_positions(ordenado):
     return res
 
 
-def total_penalizaciones_club(db, club_id):
+def total_penalizaciones_club(db, club_id, evento_ids=None):
     total = 0.0
     for p in db["penalizaciones"]:
-        if p.club_id == club_id:
+        if p.club_id == club_id and (evento_ids is None or p.evento_id in evento_ids):
             motivo = _find_motivo(db, p.motivo_id)
-            if motivo:
-                total += motivo.puntos_descuento
+            total += p.puntos if p.puntos is not None else (motivo.puntos_descuento if motivo else 0)
     return round(total, 2)
 
 
@@ -114,17 +113,18 @@ def _find_motivo(db, motivo_id):
 def ranking_temporada(db, temporada):
     """Ranking de temporada: Σ puntaje_evento (todos los eventos) − Σ penalizaciones."""
     eventos = [e for e in db["eventos"] if e.temporada == temporada]
+    evento_ids = {e.id for e in eventos}
+    rankings = {e.id: {f["club"].id: f for f in ranking_evento(db, e)} for e in eventos}
     filas = []
     for club in db["clubs"]:
         por_evento = {}
         bruto = 0.0
         for evento in eventos:
-            rank = ranking_evento(db, evento)
-            fila = next((r for r in rank if r["club"].id == club.id), None)
+            fila = rankings[evento.id].get(club.id)
             puntaje = fila["puntaje"] if fila else 0.0
             por_evento[evento.id] = puntaje
             bruto += puntaje
-        pen = total_penalizaciones_club(db, club.id)
+        pen = total_penalizaciones_club(db, club.id, evento_ids)
         filas.append({
             "club": club,
             "por_evento": por_evento,
@@ -143,30 +143,14 @@ def ranking_temporada(db, temporada):
 
 
 def actividad_staff(db, evento):
-    """Por staff principal del evento: clubes asignados vs evaluaciones completadas."""
-    criterios = [c for c in db["criterios"] if c.evento_id == evento.id]
-    ecs = [x for x in db["evento_club"] if x.evento_id == evento.id]
-    por_staff = {}
-    for ec in ecs:
-        evl = None
-        for e in db["evaluaciones"]:
-            if (e.evento_id == evento.id and e.club_id == ec.club_id and e.evaluador_id == ec.staff_principal_id):
-                evl = e
-        staff = _find_user(db, ec.staff_principal_id)
-        key = ec.staff_principal_id
-        if key not in por_staff:
-            por_staff[key] = {"staff": staff, "total": 0, "completadas": 0}
-        por_staff[key]["total"] += 1
-        if evl:
-            por_staff[key]["completadas"] += 1
-
-    respaldos = sum(
-        1 for e in db["evaluaciones"]
-        if e.evento_id == evento.id and not any(
-            ec.staff_principal_id == e.evaluador_id and ec.club_id == e.club_id for ec in ecs
-        )
-    )
-    return {"por_staff": list(por_staff.values()), "respaldos": respaldos}
+    """Actividad real: evaluaciones oficiales realizadas por cada staff."""
+    total = sum(ec.evento_id == evento.id for ec in db["evento_club"])
+    filas = []
+    for user in db["users"]:
+        if user.rol == "staff" and user.evento_id == evento.id:
+            completadas = sum(e.oficial and e.evento_id == evento.id and e.evaluador_id == user.id for e in db["evaluaciones"])
+            filas.append({"staff": user, "total": total, "completadas": completadas})
+    return {"por_staff": filas, "respaldos": sum(not e.oficial and e.evento_id == evento.id for e in db["evaluaciones"])}
 
 
 def _find_user(db, user_id):

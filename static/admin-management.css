@@ -1,0 +1,54 @@
+/* Estilo común de Clubes, Miembros, Eventos y las demás pantallas de gestión. */
+.admin-management { padding-top:3px; }
+.admin-management h1 { font-size:25px; font-weight:450; letter-spacing:-.8px; line-height:1.35; color:#1a2841; }
+.admin-management h1+p { margin-top:9px; color:#8793a9; font-size:12px; font-weight:400; }
+.mg-page-heading { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; margin:0 0 26px; }
+.mg-page-heading h1 { margin:0; }.mg-page-heading p { margin-top:8px; font-size:12px; color:#8793a9; }
+.admin-management .admin-button { color:#fff; font-size:11px; min-height:40px; }
+.mg-table-card { background:white; border:1px solid #e5e8f2; border-radius:12px; box-shadow:0 2px 3px #25365604; min-width:0; }
+.mg-table-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:17px 20px; border-bottom:1px solid #e9edf6; background:white; border-radius:12px 12px 0 0; }
+.mg-table-search { display:flex; align-items:center; gap:9px; border:1px solid #dfe3ef; border-radius:8px; padding:9px 12px; width:310px; max-width:100%; color:#96a3ba; }
+.mg-table-search input { width:100%; min-width:0; border:0!important; background:transparent!important; padding:0!important; margin:0!important; box-shadow:none!important; outline:none; font-size:11px!important; color:#5f6e87; }
+.mg-table-search:focus-within { border-color:#a89bff; box-shadow:0 0 0 3px #f0ecff; }.mg-table-search>span[aria-hidden] { font-size:22px; line-height:1; }
+.mg-count { padding:4px 9px; border-radius:20px; background:#f0f3f8; color:#7b8ba4; font-size:9px; }
+.mg-table-scroll { overflow-x:auto; width:100%; border-radius:0; }
+.admin-management .mg-table { width:100%; border-collapse:collapse; min-width:680px; text-align:left; background:white; font-size:11px; }
+.admin-management .mg-table thead { background:#fafbfe; }
+.admin-management .mg-table th { padding:13px 20px; font-size:9px; text-transform:uppercase; color:#8994ac; font-weight:500; letter-spacing:.4px; border-bottom:1px solid #e5e9f2; white-space:nowrap; }
+.admin-management .mg-table td { padding:15px 20px; border-bottom:1px solid #edf0f7; color:#78869d; font-size:11px; vertical-align:middle; }
+.admin-management .mg-table tbody tr:last-child td { border-bottom:0; }.admin-management .mg-table tbody tr:hover { background:#fcfbff; }
+.admin-management [hidden] { display:none!important; }.mg-entity { display:flex; align-items:center; gap:12px; min-width:180px; }.mg-entity strong { color:#25344d; font-weight:550; font-size:11px; }.mg-entity-icon { height:32px; width:32px; display:grid; place-items:center; border-radius:9px; background:#f0edff; color:#6b50ff; flex-shrink:0; }.mg-entity-icon svg { width:17px; height:17px; }.mg-entity small,.mg-cell-note { display:block; font-size:9px; color:#9ba5b8; margin-top:5px; }
+.mg-badge { display:inline-block; background:#f0edff; color:#795dd0; border-radius:20px; padding:4px 8px; font-size:8px; font-weight:550; white-space:nowrap; }.mg-badge.is-green { color:#169f87; background:#e7f8f2; }.mg-badge.is-amber { background:#fff4de; color:#ba8c37; }.mg-badge.is-muted { color:#8a96aa; background:#f0f2f7; }
+.mg-row-actions { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }.mg-row-actions form { margin:0; }
+.mg-icon-button { border:1px solid #e2e7f2; background:white; color:#8291aa; width:29px; min-width:29px; height:29px; padding:5px; display:inline-grid; place-items:center; border-radius:7px; cursor:pointer; font-size:18px; line-height:1; }.mg-icon-button svg { width:16px; height:16px; }.mg-icon-button:hover { border-color:#bcadff; color:#6749ed; background:#faf8ff; }.mg-icon-button.is-danger:hover { color:#d55370; border-color:#f2c9d2; background:#fff5f8; }
+.mg-small-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid #e2e6f0; color:#7a6cb1; background:white; border-radius:7px; padding:7px 10px; min-height:30px; font-size:10px; cursor:pointer; white-space:nowrap; }.mg-small-button:hover { color:#6143ed; border-color:#cfc4fc; background:#faf8ff; }.mg-small-button svg { width:14px; height:14px; }
+.mg-table-footer { padding:17px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; border-top:1px solid #edf0f7; font-size:9px; color:#929eb2; background:white; border-radius:0 0 12px 12px; }
+.mg-pages { display:flex; gap:6px; align-items:center; }.mg-pages button { border:1px solid #e3e7f2; padding:6px 10px; min-height:29px; border-radius:6px; color:#7d86a0; background:white; font-size:9px; cursor:pointer; }.mg-pages button:disabled { color:#b9c0d0; background:#fff; cursor:default; }.mg-pages button:not(:disabled):hover { color:#6445ef; background:#faf8ff; }.mg-current-page { background:#5d44f4; color:white; border-radius:6px; padding:6px 9px; min-width:30px; text-align:center; font-size:9px; }
+.mg-empty { padding:30px 20px; font-size:12px; color:#8f9bb0; margin:0; background:white; border-radius:0 0 12px 12px; }
+.mg-create,.mg-edit { position:relative; }.mg-create>summary,.mg-edit>summary { list-style:none; cursor:pointer; }.mg-create>summary::-webkit-details-marker,.mg-edit>summary::-webkit-details-marker { display:none; }
+.mg-popover { position:absolute; top:calc(100% + 10px); right:0; width:330px; padding:21px; background:white; border:1px solid #e3e6f2; border-radius:13px; z-index:65; box-shadow:0 15px 40px #2b225b22; display:flex; flex-direction:column; gap:15px; text-align:left; }
+.mg-edit .mg-popover { position:fixed; top:25vh; right:auto; left:50%; transform:translateX(-50%); }
+.mg-popover label,.mg-filter-bar label,.mg-import label { display:block; color:#728099; font-size:10px; font-weight:500; min-width:0; }
+.mg-popover input,.mg-popover select,.mg-filter-bar input,.mg-filter-bar select { display:block; width:100%; border:1px solid #dde4f1; border-radius:7px; background:#fcfdff; padding:9px 10px; margin-top:6px; color:#4d5d79; font-size:11px; min-width:0; }
+.mg-form-two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.mg-popover .admin-button { align-self:flex-start; }
+.mg-back { display:inline-block; font-size:11px; color:#8b7fba; margin:0 0 18px; }.mg-filter-bar { display:flex; align-items:flex-end; flex-wrap:wrap; gap:12px; padding:16px 20px; border:1px solid #e6eaf4; border-radius:11px; background:white; margin-bottom:18px; }.mg-filter-bar label { min-width:160px; }.mg-filter-bar .mg-small-button { min-height:36px; }.mg-filter-bar .mg-back { margin:0 0 8px; }
+.mg-import { background:white; border:1px solid #e4e8f3; border-radius:11px; margin-bottom:18px; padding:15px 20px; }.mg-import summary { cursor:pointer; display:flex; justify-content:space-between; color:#87799f; font-size:11px; list-style:none; }.mg-import summary svg { height:16px; width:16px; }.mg-import form { display:flex; gap:18px; align-items:flex-end; flex-wrap:wrap; margin-top:16px; }.mg-import input { display:block; margin-top:8px; max-width:100%; font-size:11px; }
+.admin-management-footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:29px; color:#a0aabd; font-size:9px; }.admin-management-footer a { color:#9485c1; }
+/* Unificar tablas, filtros y formularios existentes sin cambiar sus operaciones. */
+.admin-management>.mb-5,.admin-management>.mb-6 { margin-bottom:25px; flex-wrap:wrap; gap:15px; }
+.admin-management [class~="rounded-2xl"][class~="bg-white"] { border-color:#e5e8f2; border-radius:12px; box-shadow:0 2px 4px #24365d03; }
+.admin-management>form[method=get] { padding:16px 20px; gap:10px; }
+.admin-management input:not([type=hidden]):not([type=checkbox]):not([type=radio]),.admin-management select,.admin-management textarea { border-color:#dee4ef; border-radius:7px; font-size:11px; color:#687791; min-width:0; max-width:100%; }
+.admin-management form input[type=file] { width:260px; max-width:100%; }
+.admin-management input:focus,.admin-management select:focus,.admin-management textarea:focus { border-color:#b3a2ff; }
+.admin-management .bg-cyan-700,.admin-management .bg-emerald-700 { background:#5b43f2; }
+.admin-management h2,.admin-management h3 { font-weight:550; }
+.admin-management .shadow-sm { box-shadow:0 2px 4px #27345703; }
+.admin-management .text-slate-300 { color:#8d9bb1; }
+.admin-management table form { margin:0; }.admin-management table form input { max-width:130px; }
+@media(min-width:1700px) { .admin-management,.admin-management-footer { max-width:1410px; margin-left:auto; margin-right:auto; }.mg-page-heading { margin-bottom:28px; }.mg-table td { padding-top:18px; padding-bottom:18px; } }
+@media(max-width:760px) {
+ .admin-management .flex { flex-wrap:wrap; }.admin-management .flex>*:not([type=hidden]),.admin-management .grid>* { min-width:0; }
+ .mg-page-heading { gap:15px; margin-bottom:20px; align-items:flex-start; }.admin-management h1 { font-size:24px; }.mg-page-heading p { font-size:11px; }.mg-page-heading>.mg-row-actions { gap:9px; }.mg-table-toolbar { padding:14px; gap:10px; }.mg-table-search { width:100%; flex:1; min-width:160px; padding:9px; }.mg-table-search input { font-size:10px!important; }.mg-count { font-size:8px; padding:4px 7px; }.admin-management .mg-table th,.admin-management .mg-table td { padding:13px 15px; }.mg-table-footer { padding:14px; font-size:9px; gap:12px; }.mg-pages { margin-left:auto; }.mg-popover { position:fixed; top:100px; right:20px; left:20px; width:auto; max-height:calc(100dvh - 130px); overflow-y:auto; padding:20px; }.mg-edit .mg-popover { top:100px; right:20px; left:20px; transform:none; }.mg-filter-bar { padding:14px; gap:10px; }.mg-filter-bar label { min-width:0; flex:1 1 120px; }.mg-filter-bar input,.mg-filter-bar select { width:100%; }.mg-import { padding:14px; }.mg-import form { gap:13px; }.admin-management>form[method=get] { padding:14px; }.admin-management-footer { font-size:8px; }.admin-management>div,.admin-management>section { min-width:0; }.admin-management .mg-form-two { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+}
+@media print { .mg-table-toolbar,.mg-table-footer,.admin-sidebar,.admin-topbar,.admin-management-footer { display:none!important; }.admin-workspace { margin-left:0; }.mg-table-scroll { overflow:visible; }.admin-management .mg-table { min-width:0; } }

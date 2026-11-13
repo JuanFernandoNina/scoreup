@@ -7,7 +7,7 @@
 </div>
 
 <div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  {% set tipos = [('resultados','Resultados / Ranking','amber'),('incidentes','Incidentes','rose'),('penalizaciones','Penalizaciones','violet'),('staff','Actividad de staff','cyan')] %}
+  {% set tipos = [('correcciones','Correcciones de evaluaciones','cyan'),('resultados','Resultados / Ranking','amber'),('incidentes','Incidentes','rose'),('penalizaciones','Penalizaciones','violet'),('staff','Actividad de staff','cyan')] %}
   {% for key, label, color in tipos %}
   <a href="{{ url_for('admin_reportes', tipo=key) }}" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm {{ 'ring-2 ring-cyan-600' if tipo == key else 'hover:border-cyan-200' }}">
     <div class="h-2 w-8 rounded-full bg-{{ color }}-100 mb-2"></div>
@@ -16,7 +16,36 @@
   {% endfor %}
 </div>
 
-{% if tipo == 'incidentes' %}
+{% if tipo == 'correcciones' %}
+<div class="space-y-4">
+  <p class="text-sm text-slate-600">Las correcciones actualizan inmediatamente la nota oficial. Revisar o descartar una notificación no revierte la evaluación.</p>
+  {% for r in db.correcciones | reverse %}
+  {% set club = db.clubs | selectattr('id','equalto',r.club_id) | first %}
+  {% set staff = db.users | selectattr('id','equalto',r.evaluador_id) | first %}
+  {% set evento = db.eventos | selectattr('id','equalto',r.evento_id) | first %}
+  <article class="bg-white border rounded-xl p-5">
+    <h2 class="font-bold">{{ club.nombre if club else r.club_id }} · {{ evento.nombre if evento else r.evento_id }}</h2>
+    <p class="text-sm mt-1">{{ staff.nombre if staff else r.evaluador_id }} · {{ r.fecha }} · <b>{{ r.estado }}</b></p>
+    <table class="w-full mt-3 text-sm text-left">
+      <thead><tr><th>Criterio</th><th>Antes</th><th>Después</th></tr></thead>
+      <tbody>{% for id, valor in r.actual.valores.items() %}
+      {% set criterio = db.criterios | selectattr('id','equalto',id) | first %}
+      <tr><td>{{ criterio.nombre if criterio else id }}</td><td>{{ r.anterior.valores.get(id, '—') }}</td><td>{{ valor }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    <p class="mt-2 text-sm">Comentario anterior: {{ r.anterior.comentario or '—' }}</p>
+    <p class="text-sm">Comentario nuevo: {{ r.actual.comentario or '—' }}</p>
+    {% if r.estado == 'pendiente' %}
+    <form method="post" action="{{ url_for('admin_reporte_estado', reporte_id=r.id) }}" class="mt-3 flex gap-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button name="estado" value="revisado" class="bg-cyan-700 text-white p-2 rounded-lg">Marcar revisado</button>
+      <button name="estado" value="descartado" class="border p-2 rounded-lg">Descartar aviso</button>
+    </form>
+    {% endif %}
+  </article>
+  {% else %}<p class="bg-white border rounded-xl p-5">No hay correcciones registradas.</p>{% endfor %}
+</div>
+{% elif tipo == 'incidentes' %}
 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
   <div class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Incidentes reportados</div>
   <div class="overflow-x-auto">
@@ -63,7 +92,7 @@
           <td class="px-4 py-2 text-slate-600">{{ e.nombre }}</td>
           <td class="px-4 py-2 text-slate-600">{{ s.nombre }}</td>
           <td class="px-4 py-2"><span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{{ m.nombre }}</span></td>
-          <td class="px-4 py-2 text-right font-semibold text-rose-600">−{{ fmt_pts(m.puntos_descuento) }}</td>
+          <td class="px-4 py-2 text-right font-semibold text-rose-600">−{{ fmt_pts(p.puntos if p.puntos is not none else (m.puntos_descuento if m else 0)) }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -82,7 +111,7 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm">
         <thead><tr class="border-b border-slate-200 text-xs uppercase text-slate-500">
-          <th class="px-4 py-2">Staff principal</th><th class="px-4 py-2">Clubes</th><th class="px-4 py-2">Evaluaciones</th><th class="px-4 py-2 text-right">Avance</th>
+          <th class="px-4 py-2">Staff</th><th class="px-4 py-2">Clubes del evento</th><th class="px-4 py-2">Evaluaciones oficiales</th><th class="px-4 py-2 text-right">Participación</th>
         </tr></thead>
         <tbody class="divide-y divide-slate-100">
           {% for s in act.por_staff %}
@@ -90,7 +119,7 @@
             <td class="px-4 py-2.5 font-medium text-slate-700">{{ s.staff.nombre }}</td>
             <td class="px-4 py-2.5 text-slate-600">{{ s.total }} clubes</td>
             <td class="px-4 py-2.5 {{ 'font-semibold text-emerald-600' if s.completadas == s.total else 'text-slate-600' }}">{{ s.completadas }} / {{ s.total }}</td>
-            <td class="px-4 py-2.5 text-right text-xs text-slate-400">{{ (s.completadas / s.total * 100)|round|int }}%</td>
+            <td class="px-4 py-2.5 text-right text-xs text-slate-400">{{ (s.completadas / s.total * 100)|round|int if s.total else 0 }}%</td>
           </tr>
           {% endfor %}
         </tbody>

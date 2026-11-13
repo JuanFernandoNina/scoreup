@@ -1,6 +1,8 @@
 # ScoreUp — Manejo de QR por club (Diagramas de secuencia)
 
-**Estado:** propuesta · **Válido para:** escenario "evento grande" donde asignar clubes a cada staff es tedioso.
+**Estado:** implementado para pruebas locales · **Válido para:** escenario "evento grande" donde asignar clubes a cada staff es tedioso.
+
+La cámara normal del celular abre el enlace firmado. Ver [GUIA_PRUEBAS_QR.md](GUIA_PRUEBAS_QR.md) para iniciar el servidor y probar. El esquema conserva `staff_principal_id` solo por compatibilidad histórica; ya no se usa para decidir la nota oficial. Los respaldos antiguos se conservan con `oficial=False`, y SQLite impone una única nota oficial por club/evento. Los tokens son estables por club: el evento cerrado impide escrituras, pero no invalida el QR para eventos futuros.
 
 ## Cambio de flujo (resumen)
 
@@ -60,7 +62,7 @@ sequenceDiagram
     Staff->>Q: Escanea el código QR
     Q-->>Staff: Abre enlace /qr/<token> (contiene org + club)
     Staff->>S: GET /qr/<token>
-    S->>S: valida token firmado y vigencia
+    S->>S: valida token firmado y existencia del club
     alt Staff sin sesión iniciada
         S-->>Staff: Redirige a /login (guarda intención del QR)
         Staff->>S: Login (usuario y contraseña)
@@ -116,8 +118,8 @@ classDiagram
         +id: str
         +organizacion_id: str
         +nombre: str
-        +categoria: str
-        +qr_token: str  # NUEVO: token firmado {org, club}
+        +miembros: list
+        +QR firmado derivado de org e id, no almacenado
     }
 
     class Usuario {
@@ -134,7 +136,7 @@ classDiagram
     class EventoClub {
         +evento_id: str
         +club_id: str
-        +staff_principal_id: str  # ELIMINADO
+        +staff_principal_id: str  # legado, sin uso en nuevas evaluaciones
     }
 
     class Evaluacion {
@@ -144,6 +146,8 @@ classDiagram
         +evaluador_id: str
         +valores: dict
         +comentario: str
+        +oficial: bool
+        +version: int
     }
 
     EventoClub "1" --> "1" Club
@@ -170,7 +174,9 @@ classDiagram
 1. La suma de pesos de criterios debe ser **100%** para cerrar un evento.
 2. 🔒 **NUEVA:** Cada club solo puede ser evaluado **una sola vez**. Si el staff escanea y el club **ya fue evaluado**, no podrá evaluar (solo ve el aviso). El QR muestra 2 escenarios: *puede evaluar* (no evaluado aún) o *no puede evaluar* (ya evaluado).
 3. La **única** evaluación guardada para un club es la oficial (alimenta el ranking). No hay respaldos ni "staff principal".
-4. Empates en ranking: se compara el criterio de mayor peso.
-5. **Duración del QR:** el QR es del club, no del staff ni del evento; puede tener vigencia (p.ej. se desactiva al cerrar el evento).
+4. Empates en ranking de evento: se compara el criterio de mayor peso. En temporada, igualdad de total comparte posición.
+5. **Duración del QR:** el QR es del club, no del staff ni del evento. Sigue válido mientras el club y la clave existan; cerrar un evento bloquea cambios, pero permite consultar y reutilizar el QR en otro evento.
 6. **Total temporada = Σ puntajes de eventos − penalizaciones/sanciones** (fórmula final, sin cambios).
 7. 🔔 **NUEVA (correcciones):** si el staff **corrige** su evaluación mientras el evento está **abierto**, el sistema genera **automáticamente una notificación en el apartado "Reportes"** del admin (club, staff, cambio, fecha). El admin puede **marcar revisado** o **descartar**. Esto NO altera la nota vigente ni el ranking: la nota oficial sigue siendo la única evaluación (la última corrección guardada).
+8. Los criterios se congelan al empezar a evaluar. Para cerrar se requiere 100% de pesos y una evaluación oficial para cada participante.
+9. La versión del formulario evita sobrescrituras con pestañas antiguas. La transacción SQLite serializa guardados y el índice único evita duplicados oficiales.

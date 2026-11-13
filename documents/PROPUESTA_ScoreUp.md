@@ -1,5 +1,7 @@
 # Propuesta inicial – ScoreUp: Sistema de Evaluación de Clubes de Conquistadores
 
+> **Documento de línea base:** esta propuesta y su versión Word describen el modelo inicial con staff principal y respaldos. La implementación evolucionó a evaluación única por club/evento mediante QR, correcciones auditadas y cierre estricto. El estado actual y la guía de verificación están en [GUIA_PRUEBAS_QR.md](GUIA_PRUEBAS_QR.md) y en el README. Factory continúa como propuesta, no está implementado. El generador Word contiene texto independiente y no se sincroniza automáticamente con este Markdown.
+
 **Asignatura:** Taller de Programación
 **Proyecto:** ScoreUp – Evaluación y calificación de clubes en eventos y temporadas
 **Tipo de actividad:** Presentación y sustentación de propuesta de proyecto

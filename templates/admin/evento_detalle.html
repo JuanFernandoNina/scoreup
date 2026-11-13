@@ -12,6 +12,7 @@
   <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-800">Evaluaciones cerradas</span>
   {% else %}
   <form method="post" action="{{ url_for('admin_evento_cerrar', evento_id=evento.id) }}" onsubmit="return confirm('¿Cerrar evaluaciones de este evento? Ya no se podrá modificar nada.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Cerrar evaluaciones</button>
   </form>
   {% endif %}
@@ -25,6 +26,7 @@
       <p class="mt-0.5 text-xs text-slate-400">Crea usuarios y contraseñas aleatorios para Staff y para el Director de cada club participante (RF-04).</p>
     </div>
     <form method="post" action="{{ url_for('admin_evento_generar_accesos', evento_id=evento.id) }}" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input name="n_staff" type="number" min="0" max="25" value="2" class="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-cyan-500" />
       <button class="rounded-lg bg-cyan-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-cyan-800">Generar accesos</button>
     </form>
@@ -36,6 +38,7 @@
   <h2 class="font-semibold text-slate-800">Crear staff manualmente</h2>
   <p class="mt-0.5 text-xs text-slate-400">Crea un usuario Staff con el nombre, usuario y contraseña que tú elijas.</p>
   <form method="post" action="{{ url_for('admin_evento_staff_nuevo', evento_id=evento.id) }}" class="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input name="nombre" required placeholder="Nombre completo" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
     <input name="username" required placeholder="Usuario" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
     <input name="password" required minlength="4" placeholder="Contraseña" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
@@ -46,6 +49,7 @@
     <h3 class="text-sm font-semibold text-slate-700">Importar staff desde Excel</h3>
     <p class="mt-0.5 text-xs text-slate-400">Columnas: <b>nombre</b> | <b>username</b> | <b>password</b>. Descarga la <a href="{{ url_for('plantilla_staff') }}" class="font-medium text-cyan-700 hover:underline">plantilla</a>.</p>
     <form method="post" action="{{ url_for('admin_evento_importar_staff', evento_id=evento.id) }}" enctype="multipart/form-data" class="mt-2 flex flex-wrap items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="file" name="archivo" accept=".xlsx,.xlsm" required class="text-sm text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200" />
       <button class="rounded-lg bg-cyan-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-cyan-800">Importar</button>
     </form>
@@ -94,6 +98,7 @@
     </div>
     {% if not evento.cerrado %}
     <form method="post" action="{{ url_for('admin_evento_criterio', evento_id=evento.id) }}" class="mb-4 rounded-xl border border-cyan-200 bg-cyan-50/60 p-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <input name="nombre" required placeholder="Nombre del criterio" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
         <input name="peso" type="number" required step="0.1" placeholder="Peso %" class="w-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-cyan-500" />
@@ -113,10 +118,12 @@
         <div class="flex items-center gap-2">
           {% if not evento.cerrado %}
           <form method="post" action="{{ url_for('admin_evento_criterio_peso', evento_id=evento.id, criterio_id=c.id) }}" class="flex items-center gap-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input name="peso" type="number" value="{{ c.peso }}" step="0.1" class="w-16 rounded-lg border border-slate-200 px-1.5 py-1 text-xs outline-none focus:border-cyan-500" />
             <button class="rounded-md bg-slate-100 px-2 py-1 text-xs hover:bg-slate-200">OK</button>
           </form>
           <form method="post" action="{{ url_for('admin_evento_criterio_eliminar', evento_id=evento.id, criterio_id=c.id) }}" onsubmit="return confirm('¿Eliminar criterio?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="text-xs text-slate-300 hover:text-rose-600">✕</button>
           </form>
           {% endif %}
@@ -128,13 +135,13 @@
 
   <!-- Clubes y staff principal -->
   <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <h2 class="mb-1 font-semibold text-slate-800">Clubes participantes y Staff principal</h2>
-    <p class="mb-3 text-xs text-slate-400">La calificación del Staff principal es la oficial (no se promedia).</p>
+    <h2 class="mb-1 font-semibold text-slate-800">Clubes participantes · evaluación QR</h2>
+    <p class="mb-3 text-xs text-slate-400">Agrega los clubes y entrega su QR. Cualquier staff del evento puede registrar la primera evaluación. Todos deben estar evaluados para cerrar.</p>
 
     <div class="space-y-2.5">
       {% for ec in ecs %}
       {% set club = db.clubs | selectattr('id','equalto', ec.club_id) | first %}
-      {% set evaluado = db.evaluaciones | selectattr('evento_id','equalto', evento.id) | selectattr('club_id','equalto', club.id) | selectattr('evaluador_id','equalto', ec.staff_principal_id) | list | length > 0 %}
+      {% set evaluado = db.evaluaciones | selectattr('evento_id','equalto', evento.id) | selectattr('club_id','equalto', club.id) | selectattr('oficial') | list | length > 0 %}
       <div class="rounded-xl border border-slate-100 p-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -144,38 +151,25 @@
           </div>
           {% if not evento.cerrado %}
           <form method="post" action="{{ url_for('admin_evento_desasignar', evento_id=evento.id, club_id=club.id) }}" onsubmit="return confirm('¿Quitar club del evento?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="text-xs text-slate-300 hover:text-rose-600">Quitar</button>
           </form>
           {% endif %}
         </div>
-        {% if not evento.cerrado %}
-        <form method="post" action="{{ url_for('admin_evento_staff', evento_id=evento.id) }}" class="mt-2 flex items-center gap-2 text-xs">
-          <input type="hidden" name="club_id" value="{{ club.id }}" />
-          <span class="text-slate-500">Staff principal:</span>
-          <select name="staff_principal_id" class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-cyan-500" onchange="this.form.submit()">
-            {% for s in staffs %}
-            <option value="{{ s.id }}" {{ 'selected' if ec.staff_principal_id == s.id }}>{{ s.nombre }}</option>
-            {% endfor %}
-          </select>
-        </form>
-        {% else %}
-        <div class="mt-1 text-xs text-slate-400">Staff principal: {{ (staffs | selectattr('id','equalto', ec.staff_principal_id) | first).nombre if staffs | selectattr('id','equalto', ec.staff_principal_id) | first else '—' }}</div>
-        {% endif %}
+        <a class="inline-block mt-2 text-sm text-cyan-700" href="{{ url_for('admin_club_qr', club_id=club.id) }}">Ver / imprimir QR</a>
       </div>
       {% endfor %}
     </div>
 
     {% if not evento.cerrado %}
     <form method="post" action="{{ url_for('admin_evento_asignar', evento_id=evento.id) }}" class="mt-3 rounded-xl border border-dashed border-slate-200 p-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="text-xs font-semibold text-slate-500">Agregar club participante</div>
       <div class="mt-2 flex gap-2">
         <select name="club_id" class="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-cyan-500">
           {% for club in db.clubs if not (ecs | selectattr('club_id','equalto', club.id) | list) %}
           <option value="{{ club.id }}">{{ club.nombre }}</option>
           {% endfor %}
-        </select>
-        <select name="staff_principal_id" class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-cyan-500">
-          {% for s in staffs %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}
         </select>
         <button class="rounded-lg bg-cyan-700 px-3 py-1.5 text-sm text-white">Agregar</button>
       </div>
@@ -189,7 +183,7 @@
         {% for ec in pendientes %}
         {% set club = db.clubs | selectattr('id','equalto', ec.club_id) | first %}
         {% set staff = db.users | selectattr('id','equalto', ec.staff_principal_id) | first %}
-        <li>• {{ club.nombre }} — falta {{ staff.nombre if staff else 'staff principal' }}</li>
+        <li>• {{ club.nombre }} — sin evaluación oficial</li>
         {% endfor %}
       </ul>
     </div>

@@ -1,56 +1,13 @@
-{% extends "base.html" %}
+{% extends 'auth/layout.html' %}
+{% set registro_mode = false %}
 {% block title %}ScoreUp · Iniciar sesión{% endblock %}
-{% block body %}
-<div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 p-4">
-  <div class="w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid lg:grid-cols-[1.1fr_1fr]">
-    <div class="hidden flex-col justify-between bg-cyan-800 p-10 text-white lg:flex">
-      <div>
-        <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-xl font-black">S</div>
-          <div>
-            <div class="text-lg font-bold">ScoreUp</div>
-            <div class="text-xs text-cyan-100">Plataforma organizacional</div>
-          </div>
-        </div>
-        <p class="mt-10 text-2xl font-semibold leading-snug">Organiza clubes, evalúa eventos y genera rankings por temporada.</p>
-        <ul class="mt-6 space-y-3 text-sm text-cyan-50">
-          <li>• Evaluaciones por criterios ponderados (Staff principal)</li>
-          <li>• Incidentes y penalizaciones gestionables</li>
-          <li>• Vista pública para proyectar resultados</li>
-        </ul>
-      </div>
-      <p class="text-xs text-cyan-200">ScoreUp · Plataforma de evaluación</p>
-    </div>
-
-    <div class="p-8 lg:p-10">
-      <div class="mb-6 flex items-center gap-3 text-cyan-800 lg:hidden">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white font-black">S</div>
-        <span class="text-lg font-bold">ScoreUp</span>
-      </div>
-      <h1 class="text-2xl font-bold text-slate-800">Iniciar sesión</h1>
-      <p class="mt-1 text-sm text-slate-500">Ingresa tus datos. El sistema detecta tu rol.</p>
-
-      {% if error %}<div class="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ error }}</div>{% endif %}
-
-      <form method="post" class="mt-6 space-y-4">
-        <div>
-          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Usuario</label>
-          <input name="username" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="Tu usuario" />
-        </div>
-        <div>
-          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Contraseña</label>
-          <input name="password" type="password" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-600/20" placeholder="••••••••" />
-        </div>
-        <button type="submit" class="w-full rounded-xl bg-cyan-700 py-2.5 font-semibold text-white shadow transition hover:bg-cyan-800">Ingresar a mi panel</button>
-      </form>
-
-      <p class="mt-4 text-center text-sm text-slate-500">
-        ¿Eres un nuevo administrador?
-        <a href="{{ url_for('registro') }}" class="font-semibold text-cyan-700 hover:underline">Crear cuenta de Admin</a>
-      </p>
-
-
-    </div>
-  </div>
-</div>
+{% block form %}
+{% if next_path and next_path.startswith('/qr/') %}<p class="auth-qr-notice">Estás abriendo el QR de un club. Ingresa con tu cuenta Staff para continuar en tu evento.</p>{% endif %}
+<form method="post" class="auth-form" id="auth-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ next_path or '' }}">
+  <label for="auth-username">Usuario<input id="auth-username" name="username" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tu usuario de ScoreUp" value="{{ request.form.get('username','') }}"></label>
+  <div><label for="auth-password">Contraseña</label><div class="auth-password-field"><input id="auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Ingresa tu contraseña" aria-describedby="auth-caps"><button hidden type="button" class="auth-password-toggle" data-password-toggle aria-controls="auth-password" aria-pressed="false" aria-label="Mostrar contraseña">Mostrar</button></div><p class="auth-caps" id="auth-caps" hidden>Bloq Mayús está activado.</p></div>
+  <button type="submit" class="lp-button lp-button-orange auth-submit">Ingresar a mi panel {{ icon('arrow') }}</button>
+</form>
+<div class="auth-role-note"><span>Un acceso, tu espacio correcto.</span><div><b>Admin</b><b>Staff</b><b>Director</b></div><small>El sistema identifica tu rol al iniciar sesión.</small></div>
 {% endblock %}

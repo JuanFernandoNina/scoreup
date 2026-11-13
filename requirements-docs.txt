@@ -1,0 +1,3 @@
+# Dependencias del laboratorio de documentación; instalar en venv.
+mkdocs==1.6.1
+mkdocs-material==9.7.7

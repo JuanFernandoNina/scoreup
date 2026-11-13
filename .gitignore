@@ -7,6 +7,8 @@ env/
 
 # Base de datos local (se regenera con datos de ejemplo al arrancar)
 scoreup.db
+scoreup.db.*
+.secret_key
 *.sqlite3
 
 # Archivos subidos por los usuarios
@@ -18,6 +20,21 @@ static/uploads/*.webp
 
 # Entorno / editor
 .env
+.env.*
+!.env.example
 .idea/
 .vscode/
 .DS_Store
+
+# Sitio compilado de MkDocs
+/site/
+
+# No publicar bases locales, respaldos ni evidencias privadas.
+*.db
+*.db-*
+*.db.*
+*.sqlite
+*.sqlite-*
+*.sqlite3-*
+*.sqlite3.*
+/static/uploads/

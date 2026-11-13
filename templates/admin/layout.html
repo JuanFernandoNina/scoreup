@@ -1,99 +1,45 @@
-{% macro badge(tone, text) -%}
-<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-  {% if tone == 'green' %}bg-emerald-100 text-emerald-800{% elif tone == 'red' %}bg-rose-100 text-rose-800
-  {% elif tone == 'amber' %}bg-amber-100 text-amber-800{% elif tone == 'blue' %}bg-sky-100 text-sky-800
-  {% else %}bg-slate-100 text-slate-700{% endif %}">{{ text | safe }}</span>
-{%- endmacro %}
-
-{% macro card() -%}
-<div class="rounded-2xl border border-slate-200 bg-white shadow-sm"> {{ caller() }} </div>
-{%- endmacro %}
-
+{% from 'admin/icons.html' import icon %}
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}ScoreUp · Admin{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  </style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}ScoreUp · Administración{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin-utilities.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin-management.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">
 </head>
-<body class="bg-slate-50 min-h-screen">
-<div class="flex h-screen overflow-hidden">
-  <aside class="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
-    <div class="flex items-center gap-2.5 px-5 py-5">
-      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-700 text-white font-black">S</div>
-      <div class="leading-tight">
-        <div class="font-bold text-slate-800">ScoreUp</div>
-        <div class="text-[11px] text-slate-400">Panel de Admin</div>
-      </div>
-    </div>
-    <nav class="flex-1 space-y-1 px-3 py-2 text-sm font-medium">
-      {% set items = [('dashboard','Dashboard'),('clubes','Clubes'),('eventos','Eventos'),
-        ('usuarios','Usuarios'),('incidentes','Incidentes'),('penalizaciones','Penalizaciones'),
-        ('resultados','Resultados'),('reportes','Reportes')] %}
-      {% for key, label in items %}
-      <a href="{{ url_for('panel_admin' if key == 'dashboard' else 'admin_' ~ key) }}"
-         class="block rounded-xl px-3 py-2.5 {{ 'bg-cyan-700 text-white' if active == key else 'text-slate-600 hover:bg-slate-100' }}">
-        {{ label }}
-      </a>
+<body class="admin-shell" data-panel-theme>
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <a class="admin-brand" href="{{ url_for('panel_admin') }}"><span class="admin-brand-icon"><i></i><i></i><i></i></span><span>Score<span>Up</span></span></a>
+    <div class="admin-org"><span class="admin-avatar">{{ admin_shell.organizacion.nombre[:2]|upper }}</span><div><strong>{{ admin_shell.organizacion.nombre }}</strong><small>Tu organización</small></div></div>
+    <nav aria-label="Administración">
+      {% for grupo, items in [('GESTIÓN',[('dashboard','Inicio'),('clubes','Clubes'),('miembros','Miembros'),('eventos','Eventos'),('incidentes','Incidentes'),('penalizaciones','Penalizaciones')]),('ANÁLISIS',[('resultados','Resultados'),('usuarios','Accesos'),('reportes','Reportes')])] %}
+      <p class="admin-nav-label">{{ grupo }}</p>
+      {% for key, label in items %}<a class="admin-nav-link {{ 'is-active' if active == key else '' }}" href="{{ url_for('panel_admin' if key == 'dashboard' else 'admin_' ~ key) }}" {% if active == key %}aria-current="page"{% endif %}>{{ icon(key) }}<span>{{ label }}</span>{% if key == 'incidentes' and admin_shell.incidentes_abiertos %}<b class="admin-nav-count is-red">{{ admin_shell.incidentes_abiertos }}</b>{% elif key == 'reportes' and correcciones_pendientes %}<b class="admin-nav-count">{{ correcciones_pendientes }}</b>{% endif %}</a>{% endfor %}
       {% endfor %}
-      <a href="{{ url_for('admin_mostrar_resultado') }}" class="block rounded-xl px-3 py-2.5 text-slate-600 hover:bg-slate-100">Proyectar pantalla</a>
+      <a class="admin-nav-link admin-projector" href="{{ url_for('admin_mostrar_resultado') }}">{{ icon('eye') }}<span>Proyectar resultados</span></a>
     </nav>
-    <div class="border-t border-slate-200 p-3">
-      <div class="flex items-center gap-3 px-2 py-2">
-        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 text-sm font-semibold text-cyan-800">{{ user.nombre[0] }}</div>
-        <div class="min-w-0 flex-1 leading-tight">
-          <div class="truncate text-sm font-medium text-slate-700">{{ user.nombre }}</div>
-          <div class="text-[11px] uppercase tracking-wide text-cyan-700">Admin</div>
-        </div>
-        <a href="{{ url_for('logout') }}" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-rose-50 hover:text-rose-600">Salir</a>
-      </div>
-    </div>
+    <details class="admin-help"><summary><span>?</span><strong>¿Necesitas ayuda?</strong><small>Consulta nuestra guía rápida</small><b>Ver guía rápida →</b></summary><p>1. Crea tus clubes y sus miembros.<br>2. Configura un evento y sus criterios al 100 %.<br>3. Inscribe clubes y asigna staff.<br>4. Descarga los QR y evalúa con Google Lens.<br>5. Revisa reportes y cierra el evento.</p></details>
   </aside>
-
-  <!-- Sidebar móvil -->
-  <div class="lg:hidden flex w-full flex-col">
-    <div class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-      <div class="flex items-center gap-2">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-700 text-white font-black text-sm">S</div>
-        <span class="font-bold">ScoreUp</span>
-      </div>
-      <a href="{{ url_for('logout') }}" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-rose-600">Salir</a>
-    </div>
-    <div class="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2">
-      {% for key, label in items %}
-      <a href="{{ url_for('panel_admin' if key == 'dashboard' else 'admin_' ~ key) }}"
-         class="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium {{ 'bg-cyan-700 text-white' if active == key else 'text-slate-600 hover:bg-slate-100' }}">
-        {{ label }}
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="flex min-w-0 flex-1 flex-col">
-    <div class="hidden lg:flex items-center justify-end border-b border-slate-200 bg-white px-6 py-3">
-      <span class="text-xs text-slate-500">{{ user.nombre }}</span>
-      <span class="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-800">Admin</span>
-    </div>
-    <main class="flex-1 overflow-y-auto p-4 lg:p-6">
-      {% with mensajes = get_flashed_messages(with_categories=true) %}
-      {% if mensajes %}
-      <div class="mb-4 space-y-2">
-        {% for cat, m in mensajes %}
-        <div class="rounded-xl px-4 py-3 text-sm font-medium {{ 'bg-emerald-50 text-emerald-800 border border-emerald-200' if cat == 'ok' else 'bg-rose-50 text-rose-800 border border-rose-200' }}">
-          {{ m }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% endwith %}
-      {% block content %}{% endblock %}
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <button type="button" id="admin-menu-toggle" class="admin-menu-toggle" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Abrir menú">{{ icon('menu') }}</button>
+      <div class="admin-search" role="search"><label for="admin-search-input" class="admin-visually-hidden">Buscar clubes y eventos</label>{{ icon('search') }}<input id="admin-search-input" type="search" placeholder="Buscar clubes, eventos…" autocomplete="off" aria-controls="admin-search-results" aria-expanded="false"><kbd>Ctrl K</kbd><div class="admin-search-results" id="admin-search-results" hidden></div></div>
+      <div class="admin-topbar-right"><a class="admin-notifications" href="{{ url_for('admin_reportes', tipo='correcciones') }}" aria-label="Correcciones pendientes: {{ correcciones_pendientes }}">{{ icon('bell') }}{% if correcciones_pendientes %}<b>{{ correcciones_pendientes }}</b>{% endif %}</a><details class="admin-user-menu"><summary><span class="admin-avatar">{{ user.nombre[0]|upper }}{{ user.nombre.split()[-1][0]|upper if user.nombre.split()|length > 1 else '' }}</span><span><strong>{{ user.nombre }}</strong><small>Administrador</small></span>{{ icon('chevron') }}</summary><div><p>Sesión de administrador</p><a href="{{ url_for('logout') }}">Cerrar sesión →</a></div></details></div>
+    </header>
+    <main class="admin-main">
+      <div class="admin-breadcrumb"><a href="{{ url_for('panel_admin') }}">Panel de administración</a><span>/</span><span>{{ {'dashboard':'Inicio','clubes':'Clubes','miembros':'Miembros','eventos':'Eventos','incidentes':'Incidentes','penalizaciones':'Penalizaciones','usuarios':'Accesos','resultados':'Resultados','reportes':'Reportes'}.get(active, 'Gestión') }}</span></div>
+      {% for cat, message in get_flashed_messages(with_categories=true) %}<div role="status" class="admin-flash {{ 'is-success' if cat == 'ok' else 'is-error' }}">{{ message }}</div>{% endfor %}
+      <div class="{{ 'admin-management' if active != 'dashboard' else '' }}">{% block content %}{% endblock %}</div>
+      {% if active != 'dashboard' %}<footer class="admin-management-footer"><span>ScoreUp · {{ admin_shell.organizacion.nombre }}</span><a href="{{ url_for('panel_admin') }}">Volver al resumen ↑</a></footer>{% endif %}
     </main>
   </div>
-</div>
-{% block extra %}{% endblock %}
+  <script id="admin-search-data" type="application/json">{{ admin_shell.busqueda|tojson }}</script>
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  {% if active != 'dashboard' %}<script src="{{ url_for('static', filename='admin-management.js') }}"></script>{% endif %}
+  {% block extra %}{% endblock %}
+  <script src="{{ url_for('static', filename='panel-effects.js') }}"></script>
 </body>
 </html>

@@ -66,6 +66,7 @@
             {% else %}
               {% set next_state = 'en_revision' if i.estado == 'abierto' else 'resuelto' %}
               <form method="post" action="{{ url_for('admin_incidente_estado', incidente_id=i.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="estado" value="{{ next_state }}" />
                 <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{{ i.estado.replace('_',' ') }}</span>
                 <button class="ml-1 text-xs text-cyan-700 hover:underline">→ {{ next_state.replace('_',' ') }}</button>

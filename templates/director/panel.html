@@ -1,92 +1,27 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% from 'admin/icons.html' import icon %}
 {% block title %}ScoreUp · Director{% endblock %}
+{% block framework_styles %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='staff.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='director.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">{% endblock %}
 {% block body %}
-<div class="min-h-screen bg-slate-50">
-  <header class="border-b border-slate-200 bg-white px-4 py-3 lg:px-6">
-    <div class="mx-auto flex max-w-5xl items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-white font-black">D</div>
-        <div>
-          <div class="font-bold text-slate-800">Panel de Director</div>
-          <div class="text-xs text-slate-400">{{ user.nombre }}</div>
-        </div>
-      </div>
-      <a href="{{ url_for('logout') }}" class="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-100">Salir</a>
+{% set temporada = request.args.get('temporada', (db.eventos|map(attribute='temporada')|list|max) if db.eventos else '2026') %}
+<div class="staff-app director-app" data-panel-theme>
+  <aside class="staff-sidebar"><a href="{{ url_for('panel_director') }}" class="staff-brand"><span class="staff-logo">S<span>↗</span></span><span>ScoreUp<small>ESPACIO DEL DIRECTOR</small></span></a><p class="staff-nav-label">ACOMPAÑA A TU CLUB</p><nav aria-label="Secciones del director" class="staff-nav"><a href="#resumen" class="is-active" aria-current="location">{{ icon('dashboard') }}<span>Resumen</span></a><a href="#resultados">{{ icon('resultados') }}<span>Resultados</span></a><a href="#mi-club">{{ icon('clubes') }}<span>Mi club</span></a></nav><div class="staff-sidebar-note">{{ icon('resultados') }}<strong>Tu club, su recorrido.</strong><p>Consulta los resultados publicados de tus eventos. Solo ves información de tu propio club.</p></div><div class="staff-profile"><span class="staff-avatar">{{ user.nombre[0] }}</span><div><strong>{{ user.nombre }}</strong><small>Director de club</small></div><a href="{{ url_for('logout') }}">Salir</a></div></aside>
+  <div class="staff-workspace"><header class="staff-topbar"><span>Panel de director <span class="staff-separator">/</span> <strong>Resumen</strong></span><span class="staff-badge is-green">Resultados publicados</span></header><main class="staff-main">
+    <section class="staff-hero" id="resumen"><div><span class="staff-eyebrow">TEMPORADA {{ temporada }} · DIRECTOR</span><h1>Tu club tiene una historia.<br>Sigamos su progreso.</h1><p>{{ club.nombre }}</p><div class="staff-event-meta"><span>{{ db.organizacion.nombre }}</span><span>{{ club.miembros|length }} miembros</span><span>{{ eventos_club|length }} eventos cerrados con participación</span></div></div><div class="director-hero-symbol" aria-hidden="true">{{ icon('resultados') }}</div></section>
+    <div class="staff-section-title"><div><span class="staff-eyebrow">UNA VISTA CLARA</span><h2>Así va tu temporada.</h2></div><p>Solo resultados de eventos cerrados.</p></div>
+    <div class="director-stats">
+      <section class="director-stat"><span class="staff-action-icon tone-cyan">{{ icon('resultados') }}</span><strong>{{ fmt_pts(season.puntaje) if season else '0' }}<small> pts</small></strong><h3>Puntaje de temporada</h3><p>Acumulado menos penalizaciones</p></section>
+      <section class="director-stat"><span class="staff-action-icon tone-amber">{{ icon('resultados') }}</span><strong>{{ season.posicion if season and eventos_club else '—' }}<small>{{ '°' if season and eventos_club else '' }}</small></strong><h3>Posición de tu club</h3><p>{{ 'Según la clasificación de temporada' if eventos_club else 'Sin eventos cerrados en esta temporada' }}</p></section>
+      <section class="director-stat"><span class="staff-action-icon tone-violet">{{ icon('eventos') }}</span><strong>{{ eventos_club|length }}</strong><h3>Eventos publicados</h3><p>En los que participa tu club</p></section>
+      <section class="director-stat"><span class="staff-action-icon tone-rose">{{ icon('penalizaciones') }}</span><strong>{{ fmt_pts(season.penalizaciones) if season else '0' }}<small> pts</small></strong><h3>Penalizaciones</h3><p>Descuento de eventos cerrados</p></section>
     </div>
-  </header>
-
-  <main class="mx-auto max-w-5xl px-4 py-6 lg:px-6">
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-800">{{ club.nombre }}</h1>
-        <p class="mt-1 text-sm text-slate-500">{{ club.miembros|length }} miembro(s) · Organización: {{ db.organizacion.nombre }}</p>
-      </div>
-    </div>
-
-    {% if season %}
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mb-6">
-      <h2 class="font-semibold text-slate-800 mb-3">Posición en el ranking de temporada ({{ season.por_evento|length }} eventos)</h2>
-      <div class="flex items-center gap-6">
-        <div class="text-center">
-          <div class="text-4xl font-black text-amber-400">
-            {% if season.posicion == 1 %}🥇
-            {% elif season.posicion == 2 %}🥈
-            {% elif season.posicion == 3 %}🥉
-            {% else %}{{ season.posicion }}°{% endif %}
-          </div>
-          <div class="text-xs text-slate-400">posición</div>
-        </div>
-        <div class="flex-1">
-          <div class="text-3xl font-bold text-cyan-700">{{ fmt_pts(season.puntaje) }} pts</div>
-          <div class="text-sm text-slate-400 mt-1">
-            Bruto: {{ fmt_pts(season.bruto) }} · Penalizaciones: {% if season.penalizaciones %}−{{ fmt_pts(season.penalizaciones) }}{% else %}0{% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-    {% else %}
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mb-6">
-      <p class="text-sm text-slate-500">Tu club aún no tiene puntuaciones registradas en la temporada actual.</p>
-    </div>
-    {% endif %}
-
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div class="border-b border-slate-200 px-4 py-3">
-        <h2 class="font-semibold text-slate-800">Resultados por evento</h2>
-      </div>
-      {% if eventos_club|length == 0 %}
-      <div class="py-8 text-center text-sm text-slate-400">
-        Tu club aún no tiene eventos realizados.
-      </div>
-      {% else %}
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="border-b border-slate-200 bg-slate-50">
-            <tr>
-              <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Evento</th>
-              <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Fecha</th>
-              <th class="px-4 py-2 text-xs uppercase tracking-wide text-slate-500">Temporada</th>
-              <th class="px-4 py-2 text-right text-xs uppercase tracking-wide text-slate-500">Puntaje</th>
-              <th class="px-4 py-2 text-right text-xs uppercase tracking-wide text-slate-500">Máximo</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            {% for ec in eventos_club %}
-            <tr>
-              <td class="px-4 py-2.5 font-medium text-slate-700">{{ ec.evento.nombre }}</td>
-              <td class="px-4 py-2.5 text-slate-500">{{ fmt_fecha(ec.evento.fecha) }}</td>
-              <td class="px-4 py-2.5 text-slate-500">{{ ec.evento.temporada }}</td>
-              <td class="px-4 py-2.5 text-right font-semibold text-slate-800">
-                {% if ec.puntaje %}{{ fmt_pts(ec.puntaje) }} pts{% else %}— pendiente{% endif %}
-              </td>
-              <td class="px-4 py-2.5 text-slate-500">{{ ec.evento.puntaje_maximo }} pts</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% endif %}
-    </div>
-  </main>
-</div>
+    <section class="staff-card director-results" id="resultados"><div class="staff-section-title"><div><span class="staff-eyebrow">CADA ENCUENTRO CUENTA</span><h2>Resultados por evento</h2><p>Temporada {{ temporada }} · Puntaje bruto por evento</p></div><form method="get" class="director-season"><label for="director-season">Temporada<select id="director-season" name="temporada">{% for t in db.eventos|map(attribute='temporada')|unique|sort(reverse=true) %}<option value="{{ t }}" {% if t == temporada %}selected{% endif %}>{{ t }}</option>{% else %}<option value="{{ temporada }}">{{ temporada }}</option>{% endfor %}</select></label><button class="staff-button is-secondary" type="submit">Ver</button></form></div>
+      {% if eventos_club %}<div class="director-table-scroll"><table class="director-table"><thead><tr><th scope="col">Evento</th><th scope="col">Fecha</th><th scope="col">Temporada</th><th scope="col">Puntaje</th><th scope="col">Máximo</th></tr></thead><tbody>{% for ec in eventos_club %}<tr><td><div class="director-event-name"><span>{{ icon('eventos') }}</span><strong>{{ ec.evento.nombre }}</strong></div></td><td>{{ fmt_fecha(ec.evento.fecha) }}</td><td>{{ ec.evento.temporada }}</td><td>{% if ec.puntaje is not none %}<strong>{{ fmt_pts(ec.puntaje) }} pts</strong>{% else %}— pendiente{% endif %}</td><td>{{ ec.evento.puntaje_maximo }} pts</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="staff-empty">Tu club aún no tiene eventos realizados en esta temporada. Los resultados aparecen cuando el administrador cierra el evento.</div>{% endif %}
+      <div class="director-result-note">{% if season %}Bruto: {{ fmt_pts(season.bruto) }} pts · Penalizaciones: {{ fmt_pts(season.penalizaciones) }} pts · Total: {{ fmt_pts(season.puntaje) }} pts.{% endif %} El ranking de temporada descuenta penalizaciones; el puntaje individual del evento no.</div>
+    </section>
+    <div class="staff-home-grid" id="mi-club"><section class="staff-card director-club"><span class="staff-eyebrow">TU EQUIPO</span><h2>{{ club.nombre }}</h2><div class="staff-mini-stat"><span>Miembros registrados</span><strong>{{ club.miembros|length }}</strong></div><div class="staff-mini-stat"><span>Director</span><strong>{{ user.nombre }}</strong></div><div class="staff-mini-stat"><span>Organización</span><strong>{{ db.organizacion.nombre }}</strong></div><p class="staff-muted">Las altas y los cambios del club los realiza el administrador.</p></section><section class="staff-card staff-lens"><span class="staff-eyebrow">INFORMACIÓN CON CONTEXTO</span><h2>Resultados claros, sin adelantos.</h2><p>Este panel muestra únicamente los resultados de tu club en eventos cerrados. Las evaluaciones abiertas siguen en manos del staff y del administrador.</p><div class="director-readonly">{{ icon('eye') }} Tu acceso es de consulta. No permite modificar calificaciones.</div></section></div>
+    <footer class="staff-footer">ScoreUp · Clubes conectados, resultados claros.</footer>
+  </main></div>
+</div><script src="{{ url_for('static', filename='panel-effects.js') }}"></script>
 {% endblock %}

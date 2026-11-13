@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}ScoreUp · {{ error.code }}{% endblock %}
+{% block body %}
+<main class="max-w-xl mx-auto p-8">
+  <h1 class="text-2xl font-bold">{{ error.code }} · No se pudo completar la operación</h1>
+  <p role="alert" class="mt-4">{{ error.description }}</p>
+  <p class="mt-5"><a class="text-cyan-700" href="{{ url_for('index') }}">Volver a mi panel</a></p>
+  <p class="mt-3 text-sm">Si la sesión o el formulario caducó, vuelve a abrir la página antes de intentar guardar.</p>
+</main>
+{% endblock %}

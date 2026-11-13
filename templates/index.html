@@ -1,175 +1,57 @@
-{% extends "base.html" %}
-{% block title %}ScoreUp · Plataforma de evaluación de clubes{% endblock %}
-{% block body %}
-<!-- Hero -->
-<header class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 text-white">
-  <div class="absolute inset-0 opacity-20"
-       style="background-image: radial-gradient(circle at 20% 30%, rgba(6,182,212,.5) 0, transparent 30%), radial-gradient(circle at 80% 70%, rgba(16,185,129,.4) 0, transparent 30%);"></div>
-  <div class="relative mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-24">
-    <nav class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-xl font-black">S</div>
-        <div>
-          <div class="text-lg font-bold">ScoreUp</div>
-          <div class="text-xs text-cyan-100">Plataforma organizacional</div>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <a href="{{ url_for('login') }}" class="rounded-xl px-4 py-2 text-sm font-medium text-white hover:bg-white/10">Iniciar sesión</a>
-        <a href="{{ url_for('registro') }}" class="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-400">Crear cuenta</a>
-      </div>
-    </nav>
-
-    <div class="mt-16 grid items-center gap-10 lg:mt-24 lg:grid-cols-[1.1fr_1fr]">
-      <div>
-
-        <h1 class="mt-5 text-4xl font-extrabold leading-tight lg:text-5xl">
-          Evalúa a tus clubes y construye rankings por temporada
-        </h1>
-        <p class="mt-4 max-w-xl text-base text-slate-300">
-          ScoreUp organiza las evaluaciones de tus eventos, gestiona incidentes y penalizaciones,
-          y calcula automáticamente el ranking de tu organización. Con roles claros para Admins,
-          Staff y Directores de club.
-        </p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href="{{ url_for('registro') }}" class="rounded-xl bg-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:bg-cyan-400">Crear mi cuenta de Admin</a>
-          <a href="{{ url_for('login') }}" class="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">Ya tengo cuenta</a>
-        </div>
-
-      </div>
-
-      <!-- Tarjeta de ejemplo de ranking -->
-      <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="font-semibold text-white">Ranking · Temporada 2026</h2>
-          <span class="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-300">En vivo</span>
-        </div>
-        <div class="space-y-2.5">
-          {% set demo = [('Tigres del Valle', 645, '1'), ('Águilas del Norte', 610, '2'), ('Leones de la Montaña', 582, '3'), ('Halcones del Sur', 540, '4'), ('Zorros del Bosque', 498, '5')] %}
-          {% for nombre, pts, pos in demo %}
-          <div class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold {{ 'bg-amber-400 text-slate-900' if pos == '1' else 'bg-white/15 text-white' }}">{{ pos }}</div>
-            <div class="flex-1 text-sm font-medium text-white">{{ nombre }}</div>
-            <div class="text-sm font-bold text-cyan-300">{{ pts }} pts</div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
+{% from 'admin/icons.html' import icon %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Organiza clubes y eventos, evalúa mediante QR y consulta rankings con ScoreUp. Una plataforma para administradores, staff y directores.">
+  <meta name="theme-color" content="#245cee">
+  <title>ScoreUp · Cada evento cuenta</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+  <script defer src="{{ url_for('static', filename='landing.js') }}"></script>
+</head>
+<body class="lp-body">
+<a class="lp-skip" href="#contenido">Saltar al contenido</a>
+<header class="lp-header" id="lp-header">
+  <div class="lp-container lp-nav"><a class="lp-brand" href="#inicio" aria-label="ScoreUp, inicio"><span class="lp-brand-mark"><i></i><i></i><i></i></span>Score<span>Up</span></a>
+    <nav class="lp-desktop-nav" aria-label="Navegación principal"><a href="#funciones">Funciones</a><a href="#como-funciona">Cómo funciona</a><a href="#roles">Para tu equipo</a><a href="#preguntas">Preguntas</a></nav>
+    <div class="lp-nav-actions"><a class="lp-login" href="{{ url_for('login') }}">Iniciar sesión</a><a class="lp-button lp-button-orange lp-nav-cta" href="{{ url_for('registro') }}">Comenzar {{ icon('arrow') }}</a></div>
+    <details class="lp-mobile-menu"><summary aria-label="Abrir navegación">{{ icon('menu') }}</summary><nav aria-label="Navegación móvil"><a href="#funciones">Funciones</a><a href="#como-funciona">Cómo funciona</a><a href="#roles">Para tu equipo</a><a href="#preguntas">Preguntas</a><a href="{{ url_for('registro') }}">Crear cuenta de Admin →</a></nav></details>
+  </div><div class="lp-scroll-progress" aria-hidden="true"></div>
 </header>
-
-<!-- Qué es -->
-<section class="mx-auto max-w-6xl px-4 py-16 lg:px-6">
-  <div class="max-w-3xl">
-    <h2 class="text-2xl font-bold text-slate-800">¿Qué es ScoreUp?</h2>
-    <p class="mt-3 text-slate-500">
-      Es una plataforma web para organizaciones de clubes (conquistadores, scouts y similares).
-      El Admin crea eventos, define criterios de evaluación con pesos y asigna staff y clubes participantes.
-      Los Staff evalúan a cada club, reportan incidentes y aplican penalizaciones. Los resultados se
-      convierten en un ranking por temporada que los Directores pueden consultar.
-    </p>
-  </div>
-
-  <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-lg">📊</div>
-      <h3 class="mt-4 font-semibold text-slate-800">Evaluaciones ponderadas</h3>
-      <p class="mt-1.5 text-sm text-slate-500">Criterios con peso (%) definidos por el Admin. La calificación del Staff principal es la oficial.</p>
-    </div>
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-lg">⚠️</div>
-      <h3 class="mt-4 font-semibold text-slate-800">Incidentes y penalizaciones</h3>
-      <p class="mt-1.5 text-sm text-slate-500">Reporta incidentes con foto y aplica penalizaciones por motivos configurables.</p>
-    </div>
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-lg">🏆</div>
-      <h3 class="mt-4 font-semibold text-slate-800">Rankings por temporada</h3>
-      <p class="mt-1.5 text-sm text-slate-500">Ranking automático por evento y por temporada, exportable a Excel y PDF.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Roles -->
-<section class="bg-white py-16">
-  <div class="mx-auto max-w-6xl px-4 lg:px-6">
-    <h2 class="text-center text-2xl font-bold text-slate-800">Roles de la plataforma</h2>
-    <p class="mx-auto mt-2 max-w-xl text-center text-sm text-slate-500">Cada rol ingresa con su propio panel y ve solo lo que le corresponde.</p>
-    <div class="mt-10 grid gap-4 lg:grid-cols-3">
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-white font-black">A</div>
-          <div>
-            <div class="font-semibold text-slate-800">Admin</div>
-            <div class="text-xs text-slate-400">Organización</div>
-          </div>
-        </div>
-        <p class="mt-4 text-sm text-slate-600">Crea clubes, eventos, criterios y usuarios (Staff y Directores). Gestiona incidentes, penalizaciones y resultados.</p>
-      </div>
-      <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-6">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white font-black">S</div>
-          <div>
-            <div class="font-semibold text-slate-800">Staff</div>
-            <div class="text-xs text-slate-400">Evento asignado</div>
-          </div>
-        </div>
-        <p class="mt-4 text-sm text-slate-600">Evalúa a los clubes de su evento, reporta incidentes y aplica penalizaciones.</p>
-      </div>
-      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white font-black">D</div>
-          <div>
-            <div class="font-semibold text-slate-800">Director</div>
-            <div class="text-xs text-slate-400">Club</div>
-          </div>
-        </div>
-        <p class="mt-4 text-sm text-slate-600">Consulta solo su club y los resultados de los eventos ya realizados.</p>
+<main id="contenido">
+  <section class="lp-hero" id="inicio">
+    <div class="lp-orb lp-orb-one" data-parallax="0.15" aria-hidden="true"></div><div class="lp-orb lp-orb-two" data-parallax="-0.08" aria-hidden="true"></div><div class="lp-hero-grid" aria-hidden="true"></div>
+    <div class="lp-container lp-hero-content">
+      <div class="lp-hero-copy" data-reveal><span class="lp-eyebrow lp-pill"><span></span> MENOS PLANILLAS. MÁS EXPERIENCIAS.</span><h1>Grandes eventos.<br>Evaluaciones <span>claras.</span></h1><p>Reúne a tus clubes, organiza cada desafío y convierte las evaluaciones en resultados que todos pueden entender.</p><div class="lp-hero-buttons"><a class="lp-button lp-button-orange" href="{{ url_for('registro') }}">Crear mi organización {{ icon('arrow') }}</a><a class="lp-button lp-button-glass" href="#como-funciona"><span class="lp-play">▶</span> Así funciona</a></div><div class="lp-hero-note"><span class="lp-check">✓</span> Clubes, staff y resultados en un mismo lugar.</div></div>
+      <div class="lp-hero-art" data-reveal style="--delay:140ms">
+        <div class="lp-art-dots" aria-hidden="true"></div>
+        <div class="lp-preview-browser"><div class="lp-browser-bar"><span><i></i><i></i><i></i></span><small>ScoreUp · Vista ilustrativa</small><b>↗</b></div><div class="lp-browser-body"><div class="lp-mock-sidebar" aria-hidden="true">{{ icon('dashboard') }}{{ icon('clubes') }}{{ icon('eventos') }}{{ icon('resultados') }}</div><div class="lp-mock-content"><div class="lp-mock-heading"><span>TU PRÓXIMO GRAN EVENTO</span><h2>El talento se merece<br>una evaluación justa.</h2><small>Campamento · Datos de ejemplo</small></div><div class="lp-mock-stats"><div><b>03</b><span>Clubes</span></div><div><b>01</b><span>Evento</span></div><div><b>100 %</b><span>Criterios</span></div></div><div class="lp-mini-ranking"><div class="lp-mini-title"><strong>Ranking del evento</strong>{{ icon('resultados') }}</div>{% for pos, name, points, width in [('1','Club Orión','92',92),('2','Club Caleb','88',88),('3','Club Centinelas','85',85)] %}<div class="lp-mini-ranking-row"><b>{{ pos }}</b><div><span>{{ name }}</span><i><em style="width:{{ width }}%"></em></i></div><strong>{{ points }}<small> pts</small></strong></div>{% endfor %}</div></div></div></div>
+        <div class="lp-float-card lp-float-qr">{{ icon('dashboard') }}<span><strong>Un club. Un QR.</strong><small>Escanea con Google Lens</small></span><b>✓</b></div>
+        <div class="lp-float-card lp-float-save"><span class="lp-success-icon">✓</span><span><strong>Evaluación guardada</strong><small>Un paso más hacia el resultado</small></span></div>
+        <div class="lp-art-caption">Vista ilustrativa · Los datos reales se muestran al iniciar sesión.</div>
       </div>
     </div>
-  </div>
-</section>
+    <a class="lp-scroll-hint" href="#funciones"><span></span> Descubre ScoreUp ↓</a>
+    <svg class="lp-wave" viewBox="0 0 1440 110" preserveAspectRatio="none" aria-hidden="true"><path fill="#ffffff25" d="M0 35Q180 120 360 50T720 60T1080 40T1440 60V110H0Z"/><path fill="#ffffff50" d="M0 65Q180 5 360 70T720 65T1080 70T1440 35V110H0Z"/><path fill="#fff" d="M0 75Q180 20 360 80T720 78T1080 65T1440 70V110H0Z"/></svg>
+  </section>
 
-<!-- Cómo funciona -->
-<section class="mx-auto max-w-6xl px-4 py-16 lg:px-6">
-  <h2 class="text-center text-2xl font-bold text-slate-800">¿Cómo funciona?</h2>
-  <div class="mt-10 grid gap-4 lg:grid-cols-4">
-    {% set pasos = [
-      ('1', 'Crea tu organización', 'Regístrate como Admin y crea tu organización con sus clubes y miembros.'),
-      ('2', 'Diseña los eventos', 'Crea eventos, define criterios de evaluación con sus pesos y asigna clubes participantes.'),
-      ('3', 'Invita a evaluar', 'Genera accesos o crea usuarios Staff y Directores. El Staff evalúa cada club.'),
-      ('4', 'Revisa los resultados', 'El sistema calcula el ranking del evento y de la temporada automáticamente.'),
-    ] %}
-    {% for n, titulo, texto in pasos %}
-    <div class="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-700 font-bold text-white">{{ n }}</div>
-      <h3 class="mt-4 font-semibold text-slate-800">{{ titulo }}</h3>
-      <p class="mt-1.5 text-sm text-slate-500">{{ texto }}</p>
-    </div>
-    {% endfor %}
-  </div>
+  <section class="lp-section lp-container" id="funciones">
+    <div class="lp-section-heading" data-reveal><span class="lp-eyebrow">TODO CONECTADO</span><h2>Tu evento, <span>sin piezas sueltas.</span></h2><p>Desde el primer club inscrito hasta el último punto del ranking.</p></div>
+    <div class="lp-features">{% for key, title, text, tone in [('clubes','Clubes y miembros','Organiza los equipos y las personas que hacen posible cada encuentro.','blue'),('eventos','Eventos a tu medida','Define actividades, participantes y criterios que sumen 100 %.','orange'),('dashboard','Evaluación con QR','El QR identifica al club; la cuenta del staff selecciona su evento.','violet'),('resultados','Rankings claros','Consulta clasificaciones por evento y por temporada.','blue'),('usuarios','Un rol para cada persona','Admin, staff y director, con accesos diferentes.','violet'),('incidentes','Incidentes con contexto','Registra lo ocurrido y adjunta evidencia fotográfica.','orange'),('clock','Penalizaciones trazables','Aplica descuentos con motivos definidos y puntajes históricos.','blue'),('reportes','Resultados para compartir','Exporta los rankings a Excel y PDF desde administración.','violet')] %}<article class="lp-feature" data-reveal style="--delay:{{ (loop.index0 % 4) * 65 }}ms"><span class="lp-feature-icon lp-tone-{{ tone }}">{{ icon(key) }}</span><div><h3>{{ title }}</h3><p>{{ text }}</p></div></article>{% endfor %}</div>
+  </section>
 
-  <div class="mt-12 rounded-3xl bg-gradient-to-br from-cyan-700 to-cyan-900 p-8 text-center text-white lg:p-12">
-    <h2 class="text-2xl font-bold">Empieza ahora, es gratis</h2>
-    <p class="mx-auto mt-2 max-w-lg text-sm text-cyan-100">Crea la cuenta de Admin de tu organización en menos de un minuto y comienza a organizar tus eventos.</p>
-    <div class="mt-6 flex flex-wrap justify-center gap-3">
-      <a href="{{ url_for('registro') }}" class="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">Crear mi cuenta de Admin</a>
-      <a href="{{ url_for('login') }}" class="rounded-xl border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">Iniciar sesión</a>
-    </div>
-  </div>
-</section>
+  <section class="lp-container lp-mobile-banner" data-reveal><div class="lp-banner-copy"><span class="lp-eyebrow">DEL QR A LA CALIFICACIÓN</span><h2>La evaluación de tu club,<br>a un escaneo de distancia.</h2><p>Google Lens abre la ficha. Tu staff pone el criterio.</p><a class="lp-button lp-button-orange" href="{{ url_for('login') }}">Entrar como staff {{ icon('arrow') }}</a></div><div class="lp-phone-scene" aria-hidden="true"><div class="lp-phone lp-phone-back"><div class="lp-phone-notch"></div><span>ScoreUp</span><h3>Tu evento</h3><div class="lp-phone-tile">{{ icon('clubes') }} Clubes</div><div class="lp-phone-tile">{{ icon('resultados') }} Evaluar</div><div class="lp-phone-tile">{{ icon('incidentes') }} Incidentes</div></div><div class="lp-phone lp-phone-front"><div class="lp-phone-notch"></div><small>EVALUACIÓN · EJEMPLO</small><h3>Club Caleb</h3><div class="lp-phone-score">88<small>puntos</small></div><span>Disciplina</span><i style="--bar:80%"></i><span>Participación</span><i style="--bar:90%"></i><span>Puntualidad</span><i style="--bar:100%"></i><b>Evaluación guardada ✓</b></div><span class="lp-phone-spark lp-spark-one">✦</span><span class="lp-phone-spark lp-spark-two">✦</span></div></section>
 
-<footer class="border-t border-slate-200 bg-white py-8">
-  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 lg:px-6">
-    <div class="flex items-center gap-2">
-      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-700 text-sm font-black text-white">S</div>
-      <span class="text-sm font-bold text-slate-700">ScoreUp</span>
-      <span class="text-xs text-slate-400">ScoreUp · Proyecto Programación</span>
-    </div>
-    <div class="flex gap-4 text-sm text-slate-500">
-      <a href="{{ url_for('login') }}" class="hover:text-cyan-700">Iniciar sesión</a>
-      <a href="{{ url_for('registro') }}" class="hover:text-cyan-700">Crear cuenta</a>
-    </div>
-  </div>
-</footer>
-{% endblock %}
+  <section class="lp-section lp-container" id="roles"><div class="lp-section-heading" data-reveal><span class="lp-eyebrow">UN MISMO EQUIPO. DISTINTAS MISIONES.</span><h2>Cada persona, <span>en su lugar.</span></h2><p>Una experiencia pensada para quienes organizan, evalúan y acompañan.</p></div><div class="lp-roles">{% for key, tag, title, text, items, tone in [('dashboard','ORGANIZA','Administrador','La visión completa de tu organización.',['Configura clubes, eventos y criterios','Asigna accesos y supervisa reportes','Consulta y exporta resultados'],'blue'),('usuarios','EVALÚA','Staff','La acción está en tu evento asignado.',['Abre el QR del club con Google Lens','Califica y corrige tus evaluaciones','Registra incidentes y penalizaciones'],'orange'),('clubes','ACOMPAÑA','Director','La información que le corresponde a tu club.',['Accede con tu cuenta de director','Consulta resultados de eventos cerrados','Revisa el desempeño de tu club'],'violet')] %}<article class="lp-role-card {{ 'lp-role-featured' if key == 'usuarios' else '' }}" data-reveal style="--delay:{{ loop.index0 * 100 }}ms"><div class="lp-role-top"><span class="lp-feature-icon lp-tone-{{ tone }}">{{ icon(key) }}</span><span>{{ tag }}</span></div><h3>{{ title }}</h3><p>{{ text }}</p><ul>{% for item in items %}<li><span>✓</span>{{ item }}</li>{% endfor %}</ul><a href="{{ url_for('registro' if key == 'dashboard' else 'login') }}">{{ 'Crear organización' if key == 'dashboard' else 'Iniciar sesión' }} {{ icon('arrow') }}</a></article>{% endfor %}</div></section>
+
+  <section class="lp-process-section" id="como-funciona"><div class="lp-container lp-process-grid"><div class="lp-process-visual" data-reveal><div class="lp-flow-orbit" aria-hidden="true"></div><div class="lp-flow-main"><span class="lp-flow-logo">S↗</span><strong>Todo comienza<br>con tu organización.</strong><small>Conecta cada parte de tu evento</small><div class="lp-flow-tags"><span>{{ icon('clubes') }} Clubes</span><span>{{ icon('eventos') }} Eventos</span><span>{{ icon('resultados') }} Resultados</span></div></div><div class="lp-flow-mini">{{ icon('eventos') }}<span>Configura tu evento</span><b>01</b></div><div class="lp-flow-mini lp-flow-mini-bottom">{{ icon('resultados') }}<span>Haz que cada punto cuente</span></div></div><div class="lp-process-copy"><span class="lp-eyebrow" data-reveal">SIMPLE DESDE EL PRIMER DÍA</span><h2 data-reveal>Menos vueltas.<br><span>Más organización.</span></h2><p data-reveal>Un recorrido claro, antes, durante y después del evento.</p><ol class="lp-steps">{% for number,title,text in [('01','Prepara el encuentro','Crea tu organización, registra clubes y define criterios de evaluación.'),('02','Conecta a tu equipo','Inscribe los clubes y asigna el evento a cada cuenta de staff.'),('03','Escanea y evalúa','El staff abre el QR con Google Lens y registra las notas de cada criterio.'),('04','Comparte los resultados','Revisa reportes, cierra el evento y consulta el ranking de temporada.')] %}<li data-reveal style="--delay:{{ loop.index0 * 50 }}ms"><span>{{ number }}</span><div><h3>{{ title }}</h3><p>{{ text }}</p></div></li>{% endfor %}</ol></div></div></section>
+
+  <section class="lp-section lp-container lp-demo-section"><div class="lp-demo-copy" data-reveal><span class="lp-eyebrow">LOS NÚMEROS, SIN MISTERIOS</span><h2>Tú defines los criterios.<br><span>ScoreUp hace la cuenta.</span></h2><p>Prueba esta evaluación ilustrativa. Mueve las notas y descubre cómo cada criterio aporta al puntaje.</p><div class="lp-formula">Nota × peso del criterio = aporte al resultado</div><small>Ejemplo con máximo de 100 puntos. No se guarda en ningún evento.</small></div><div class="lp-score-demo" data-reveal style="--delay:120ms"><div class="lp-demo-title"><span class="lp-feature-icon lp-tone-blue">{{ icon('resultados') }}</span><div><h3>Evaluación de ejemplo</h3><p>Club Caleb · Demostración interactiva</p></div></div>{% for key,title,weight,value in [('disciplina','Disciplina',40,80),('participacion','Participación',40,90),('puntualidad','Puntualidad',20,100)] %}<label class="lp-demo-criterion" for="lp-{{ key }}"><span>{{ title }} <small>{{ weight }} %</small></span><div><input id="lp-{{ key }}" type="range" min="0" max="100" step="1" value="{{ value }}" data-demo-weight="{{ weight }}"><output for="lp-{{ key }}">{{ value }}</output></div></label>{% endfor %}<div class="lp-demo-total"><span>Puntaje ponderado<small>Vista previa · sin guardar</small></span><output id="lp-demo-total" aria-live="polite">88 <small>/ 100</small></output></div><noscript><p>Activa JavaScript para probar el cálculo interactivo.</p></noscript></div></section>
+
+  <section class="lp-faq-section" id="preguntas"><div class="lp-container"><div class="lp-section-heading" data-reveal><span class="lp-eyebrow">ANTES DE COMENZAR</span><h2>Las dudas, <span>también resueltas.</span></h2></div><div class="lp-faqs" data-reveal>{% for question,answer in [('¿Necesito instalar una aplicación en el celular?','No. ScoreUp funciona desde el navegador. Puedes abrir el QR del club con Google Lens y continuar en el navegador donde iniciaste sesión como staff.'),('¿El mismo QR sirve para varios eventos?','Sí. El QR identifica al club. La cuenta del staff determina el evento en el que puede evaluarlo, siempre que ese club esté inscrito.'),('¿Se puede corregir una evaluación?','Solo el autor de la evaluación oficial puede corregirla mientras el evento esté abierto. Cada corrección genera un registro revisable por el administrador.'),('¿Qué puede consultar un director?','El director consulta los resultados de su propio club en eventos cerrados. No puede calificar clubes ni administrar la organización.'),('¿Funciona en una red local?','Sí. El servidor debe estar encendido y el celular debe poder acceder a su dirección de red. Para usarlo por Wi-Fi local, conecta ambos a la misma red. La cámara en vivo dentro del navegador requiere HTTPS; Google Lens permite abrir el enlace QR sin esa función.') ] %}<details><summary>{{ question }}<span aria-hidden="true">+</span></summary><p>{{ answer }}</p></details>{% endfor %}</div></div></section>
+
+  <section class="lp-container lp-final-cta" data-reveal><div><span class="lp-eyebrow">TU PRÓXIMO EVENTO EMPIEZA AQUÍ</span><h2>Que organizar sea más simple.<br>Que cada punto cuente.</h2><p>Crea tu organización y comienza a dar forma al próximo encuentro.</p></div><a class="lp-button lp-button-orange" href="{{ url_for('registro') }}">Empezar con ScoreUp {{ icon('arrow') }}</a><div class="lp-cta-ring" aria-hidden="true"></div></section>
+</main>
+<footer class="lp-footer"><div class="lp-container lp-footer-grid"><div><a class="lp-brand" href="#inicio"><span class="lp-brand-mark"><i></i><i></i><i></i></span>Score<span>Up</span></a><p>Clubes conectados.<br>Evaluaciones claras.<br>Eventos que cuentan.</p></div><div><h2>Descubre</h2><a href="#funciones">Funciones</a><a href="#como-funciona">Cómo funciona</a><a href="#roles">Para tu equipo</a></div><div><h2>Comienza</h2><a href="{{ url_for('registro') }}">Crear organización</a><a href="{{ url_for('login') }}">Iniciar sesión</a><a href="#preguntas">Preguntas frecuentes</a></div><div class="lp-footer-note"><h2>Hecho para organizar</h2><p>Una plataforma para clubes de Conquistadores y organizaciones que evalúan actividades por eventos y temporadas.</p></div></div><div class="lp-container lp-footer-bottom"><span>ScoreUp · Proyecto de Taller de Programación</span><a href="#inicio">Volver arriba ↑</a></div></footer>
+</body>
+</html>

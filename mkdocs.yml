@@ -1,0 +1,39 @@
+site_name: ScoreUp — Taller de Programación
+site_author: Equipo ScoreUp
+site_description: Documentación técnica del sistema de evaluación de clubes de Conquistadores
+dev_addr: '127.0.0.1:8080'
+
+theme:
+  name: material
+  language: es
+  palette:
+    scheme: default
+    primary: indigo
+    accent: deep orange
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Inicio: index.md
+  - Instalación y Requisitos: instalacion.md
+  - Arquitectura del Sistema: arquitectura.md
+  - Guía de Uso: guia-uso.md
+  - API / Módulos: api.md
+  - Recursos multimedia (4.2): recursos-multimedia.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
