@@ -1,0 +1,37 @@
+/* Proyección integrada en el dashboard azul/naranja. Sin dependencias externas. */
+.projection-hero{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.projection-hero h1{margin:6px 0 10px}.projection-hero p{color:#e3edff;line-height:1.8}
+.admin-management .projection-hero p{color:#e3edff}
+.projection-eyebrow{font-size:10px;font-weight:700;letter-spacing:1.6px;color:#7894bd}
+.projection-hero .projection-eyebrow{color:#c7dcff}
+.admin-management .projection-hero .admin-button.is-secondary{background:#ffffff18;color:white;border-color:#ffffff55;flex-shrink:0}
+.projection-controls,.projection-stage,.projection-classification{background:white;border:1px solid #e3ebf8;border-radius:18px;margin-bottom:24px}
+.projection-controls{padding:20px 24px}.projection-controls form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px}
+.projection-controls label{display:grid;gap:8px;font-size:11px;font-weight:600;color:#5a759a;flex:1 1 170px;min-width:0}
+.projection-controls label[for=projection-event]{flex:1.5 1 220px}
+.admin-management .projection-controls select{width:100%;max-width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #dce6f8;border-radius:10px;background:#f8faff;color:#375a8d;font-size:12px}
+.projection-controls .admin-button{min-height:44px;justify-content:center}
+.projection-stage{padding:32px 36px;background:radial-gradient(ellipse at 50% 45%,#eff5ff,white 75%);overflow:hidden}
+.projection-heading{text-align:center}.projection-heading h2{font-size:28px;letter-spacing:-.7px;margin:9px 0;color:#203f68}.projection-heading p{color:#7189aa;font-size:14px;margin:0 0 14px}
+.projection-status{display:inline-block;background:#f0f5ff;border:1px solid #e0e9fa;border-radius:8px;padding:6px 10px;font-size:10px;color:#6482b0;line-height:1.6}
+.projection-status.is-published{color:#34846e;background:#eef9f4;border-color:#d6eee3}
+.projection-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:18px;max-width:830px;margin:36px auto 22px}
+.projection-place{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-width:0;text-align:center;border:1px solid #dfe8f9;border-radius:18px;padding:24px 18px;background:#f3f7ff;min-height:235px}
+.projection-place.place-1{min-height:280px;background:linear-gradient(145deg,#2558dd,#3977f3);border-color:#356de3;box-shadow:0 12px 30px #245cee20}
+.projection-place.place-3{min-height:210px;background:#fff7ef;border-color:#f6e4d3}
+.projection-medal{display:grid;place-items:center;width:48px;height:48px;background:white;color:#6792d7;border:1px solid #dfe8f9;border-radius:15px;margin-bottom:12px}
+.projection-place.place-1 .projection-medal{background:#ffca91;color:#8f5b2a;border-color:#ffd6a9}
+.projection-place.place-3 .projection-medal{color:#b77d45;border-color:#f0dfce}
+.projection-position{color:#7293c1;font-size:12px;font-weight:750}.projection-place.place-1 .projection-position{color:#d4e5ff}
+.projection-place h3{font-size:18px;color:#2f527f;line-height:1.4;margin:8px 0 12px;overflow-wrap:anywhere;max-width:100%}
+.projection-place.place-1 h3{color:white}.projection-points{font-size:30px;font-weight:750;color:#3565af;line-height:1.3;overflow-wrap:anywhere;max-width:100%}
+.projection-points small{display:block;font-size:10px;font-weight:500;color:#7d95b6;margin-top:4px}.projection-place.place-1 .projection-points{color:#ffcd96}.projection-place.place-1 small{color:#d2e2ff}
+.projection-place.is-empty{opacity:.6}.projection-note{font-size:11px;text-align:center;color:#7e93b0;line-height:1.8;margin:22px 0 0}
+.projection-classification{padding:26px}.projection-list-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.projection-list-heading h2{font-size:20px;margin:7px 0 0;color:#294b78}
+.projection-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}.projection-list li{display:flex;align-items:center;gap:14px;border:1px solid #e6edf9;border-radius:12px;padding:13px 16px;font-size:13px;color:#557194;min-width:0}
+.projection-rank{display:grid;place-items:center;min-width:32px;height:32px;background:#f2f6fc;border-radius:9px;font-weight:700;font-size:12px;color:#7891b3;flex-shrink:0}.projection-rank.is-top{background:#fff0df;color:#ad723a}
+.projection-list li>strong{font-weight:600;overflow-wrap:anywhere;min-width:0}.projection-list-points{font-weight:700;color:#3768b9;margin-left:auto;flex-shrink:0}.projection-list-points small{font-size:10px;color:#8599b5;font-weight:500}
+.projection-empty{text-align:center;padding:50px 20px;color:#8297b7}.projection-empty>svg{width:48px;height:48px;color:#6e99e8}.projection-empty h3{color:#436692;margin:16px 0 8px;font-size:18px}.projection-empty p{font-size:13px;line-height:1.8}
+@media(max-width:1100px){.projection-controls label{flex-basis:190px}.projection-stage{padding:28px 24px}.projection-podium{gap:12px}.projection-place{padding:20px 12px}.projection-place h3{font-size:16px}}
+@media(max-width:760px){.projection-hero{flex-direction:column;align-items:flex-start;gap:18px}.projection-hero p{font-size:12px}.projection-controls{padding:20px}.projection-controls form{display:grid;grid-template-columns:minmax(0,1fr)}.admin-management .projection-controls select{font-size:16px}.projection-stage{padding:24px 16px}.projection-heading h2{font-size:23px}.projection-heading p{font-size:12px}.projection-eyebrow{font-size:9px;letter-spacing:1.2px}.projection-podium{gap:8px;margin-top:26px}.projection-place{padding:16px 7px;min-height:200px;border-radius:13px}.projection-place.place-1{min-height:235px}.projection-place.place-3{min-height:185px}.projection-medal{width:33px;height:33px;border-radius:10px}.projection-medal svg{width:19px;height:19px}.projection-place h3{font-size:12px;margin:8px 0}.projection-points{font-size:19px}.projection-points small{font-size:9px}.projection-status{font-size:9px}.projection-classification{padding:20px 16px}.projection-list-heading h2{font-size:17px}.projection-list li{padding:12px 10px;gap:9px;font-size:12px}.projection-list-points{font-size:12px}.projection-list-heading{flex-wrap:wrap}.projection-note{font-size:10px}}
+@media(max-width:360px){.projection-stage{padding-inline:12px}.projection-podium{gap:5px}.projection-place{padding-inline:5px}.projection-place h3{font-size:11px}.projection-points{font-size:16px}.projection-eyebrow{letter-spacing:1px}}

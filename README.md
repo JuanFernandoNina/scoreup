@@ -240,7 +240,7 @@ python app.py
 
 Abre **http://127.0.0.1:5000** en tu navegador. Para probar el QR desde el celular, abre el panel usando la **IP local del PC**, no localhost. Ambos dispositivos deben estar en la misma red. El servidor escucha en `0.0.0.0` por defecto, sin depurador; úsalo solo en una red de confianza. No es un servidor de producción.
 
-> La base de datos `scoreup.db` se crea automáticamente con datos de ejemplo en la primera ejecución (no está versionada en el repositorio).
+> La base local `scoreup.db` no se publica. Para usar los datos del campamento ya preparados (clubes, notas, incidentes, penalizaciones y eventos pendientes), **antes del primer inicio** ejecuta `.venv\Scripts\python.exe scripts\preparar_demo.py` y elige tus contraseñas. Consulta [demo/LEEME.md](demo/LEEME.md). Se incluye únicamente una base de demostración anonimizada, sin credenciales originales ni claves de sesión. Si no preparas esa copia, el primer inicio crea los datos de ejemplo básicos.
 
 ---
 

@@ -1,27 +1,34 @@
-{% extends 'base.html' %}
-{% block title %}QR · {{ club.nombre }}{% endblock %}
-{% block body %}
-<main class="max-w-xl mx-auto p-6 text-center">
-  <div class="print:hidden mb-5"><a href="{{ url_for('admin_clubes') }}" class="text-cyan-700">← Clubes</a></div>
-  <section class="bg-white border rounded-xl p-6">
-    <h1 class="text-2xl font-bold">{{ club.nombre }}</h1>
-    <p class="mt-2">ScoreUp · Escanea para evaluar</p>
-    <img class="mx-auto my-4 max-w-full" style="width:384px; image-rendering:pixelated" src="{{ url_for('admin_club_qr', club_id=club.id, formato='png', base_url=base_url) }}" alt="Código QR de {{ club.nombre }}">
-    <p class="text-sm break-all"><a href="{{ link }}">{{ link }}</a></p>
-    <p class="mt-3 text-sm">Requiere una cuenta Staff del evento en el que participa este club.</p>
-    <p class="mt-2 text-sm">Para fotografiarlo: encuadra el código completo de frente, con su borde blanco y sin reflejos. Imprime la tarjeta con el QR de al menos 6 cm de ancho.</p>
+{% extends 'admin/layout.html' %}
+{% from 'admin/icons.html' import icon %}
+{% set active = 'clubes' %}
+{% block title %}ScoreUp · QR de {{ club.nombre }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='club-qr.css') }}">{% endblock %}
+{% block content %}
+<div class="club-qr-page">
+  <section class="admin-welcome club-qr-hero">
+    <div><span class="club-qr-eyebrow">CLUBES · TARJETA DE ACCESO</span><h1>Un club. Un QR.</h1><p>Comparte la tarjeta de {{ club.nombre }} y abre su ficha de evaluación en segundos.</p></div>
+    <a class="admin-button is-secondary" href="{{ url_for('admin_clubes') }}">← Volver a clubes</a>
   </section>
-  {% if local_host %}<p class="print:hidden mt-4 bg-amber-100 rounded p-3">Este QR apunta a localhost y no funcionará desde otro dispositivo. Accede al panel usando la IP del PC o configura PUBLIC_BASE_URL antes de imprimir.</p>{% endif %}
-  <form method="get" class="print:hidden mt-4 text-left border rounded-xl p-4 bg-white">
-    <label for="base_url" class="font-semibold">Dirección del servidor para el celular</label>
-    <p class="text-sm my-2">PC y celular deben estar en la misma red. Usa la IPv4 del PC y el puerto 5000; puedes verla con ipconfig.</p>
-    <input id="base_url" name="base_url" type="url" required value="{{ base_url }}" placeholder="http://192.168.1.20:5000" class="w-full border rounded p-2">
-    <button class="mt-3 border rounded-lg p-2">Actualizar QR</button>
-    <p class="text-xs mt-2">Este ajuste se aplica a esta tarjeta y su descarga. El mismo QR sirve para todos los eventos del club.</p>
-  </form>
-  <div class="print:hidden mt-5 flex justify-center gap-4">
-    <button onclick="window.print()" class="rounded-lg bg-cyan-700 text-white p-3">Imprimir tarjeta</button>
-    <a href="{{ url_for('admin_club_qr', club_id=club.id, formato='png', base_url=base_url) }}" class="rounded-lg border p-3">Descargar PNG</a>
+  {% if local_host %}<p class="club-qr-warning" role="status">Este QR apunta a localhost y no funcionará desde otro dispositivo. Accede al panel usando la IP del PC o configura la dirección del servidor antes de imprimir.</p>{% endif %}
+  <div class="club-qr-grid">
+    <section class="admin-panel club-qr-card" aria-labelledby="club-qr-title">
+      <span class="club-qr-eyebrow">SCOREUP · ESCANEA PARA EVALUAR</span>
+      <h2 id="club-qr-title">{{ club.nombre }}</h2>
+      <p class="club-qr-subtitle">Un mismo código para todos los eventos de tu club.</p>
+      <div class="club-qr-image"><img src="{{ url_for('admin_club_qr', club_id=club.id, formato='png', base_url=base_url) }}" alt="Código QR de {{ club.nombre }}" width="384" height="384"></div>
+      <p class="club-qr-instruction">Escanea con Google Lens o con el lector de ScoreUp.</p>
+      <p class="club-qr-link"><a href="{{ link }}">{{ link }}</a></p>
+      <p class="club-qr-account">Requiere una cuenta Staff del evento en el que participa este club.</p>
+      <div class="club-qr-actions"><button type="button" onclick="window.print()" class="admin-button">{{ icon('eye') }} Imprimir tarjeta</button><a href="{{ url_for('admin_club_qr', club_id=club.id, formato='png', base_url=base_url) }}" class="admin-button is-secondary">{{ icon('download') }} Descargar PNG</a></div>
+    </section>
+    <div class="club-qr-side">
+      <section class="admin-panel club-qr-settings" aria-labelledby="qr-settings-title">
+        <span class="club-qr-eyebrow">CONEXIÓN CON EL CELULAR</span><h2 id="qr-settings-title">Prepara tu tarjeta</h2><p>La computadora y el celular deben estar conectados a la misma red.</p>
+        <form method="get"><label for="base_url">Dirección del servidor para el celular</label><input id="base_url" name="base_url" type="url" required value="{{ base_url }}" placeholder="http://192.168.1.20:5000" aria-describedby="qr-address-help"><p id="qr-address-help" class="club-qr-help">Usa la IPv4 del PC y el puerto 5000. Puedes verla con ipconfig.</p><button type="submit" class="admin-button">Actualizar QR</button></form>
+        <p class="club-qr-help">Este ajuste se aplica a esta tarjeta y su descarga. No cambia la configuración general del servidor.</p>
+      </section>
+      <section class="admin-panel club-qr-guide"><span class="club-qr-eyebrow">LISTO PARA COMPARTIR</span><h2>Del QR a la evaluación</h2><ol><li><b>1</b><span>Descarga el PNG o imprime esta tarjeta.</span></li><li><b>2</b><span>El staff escanea el QR e inicia sesión con su cuenta.</span></li><li><b>3</b><span>ScoreUp abre el club en el evento asignado al staff.</span></li></ol><div class="club-qr-print-tip"><strong>Una lectura más fácil</strong><p>Imprime el QR de al menos 6 cm de ancho. Encuadra el código completo de frente, con su borde blanco y sin reflejos.</p></div></section>
+    </div>
   </div>
-</main>
+</div>
 {% endblock %}

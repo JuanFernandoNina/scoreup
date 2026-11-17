@@ -1,29 +1,64 @@
 {% extends 'base.html' %}
+{% from 'staff/_icons.html' import icon %}
 {% block title %}ScoreUp · Escanear QR{% endblock %}
+{% block framework_styles %}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='staff.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='scanner.css') }}">
+{% endblock %}
 {% block body %}
-<main class="max-w-xl mx-auto p-4 space-y-5">
-  <a href="{{ url_for('panel_staff') }}" class="text-cyan-700">← Volver al evento</a>
-  <section class="bg-white border rounded-xl p-5 space-y-4">
-    <h1 class="text-2xl font-bold">Escanear QR del club</h1>
-    <p>Staff: <b>{{ user.nombre }}</b><br>Evento: <b>{{ evento.nombre }}</b></p>
-    <p class="text-sm">El QR identifica al club. Tu cuenta determina el evento y sus criterios de evaluación.</p>
-    {% if evento.cerrado %}<p class="bg-amber-100 rounded p-3">Evento cerrado: solo podrás consultar la evaluación.</p>{% endif %}
-    <video id="preview" hidden playsinline muted style="width:100%; border-radius:12px"></video>
-    <canvas id="scan-canvas" hidden></canvas>
-    <div class="flex flex-wrap gap-3">
-      <button id="start-camera" type="button" class="bg-cyan-700 text-white rounded-lg p-3">Activar cámara</button>
-      <button id="stop-camera" type="button" hidden class="border rounded-lg p-3">Detener cámara</button>
-    </div>
-    <div class="space-y-3">
-      <label class="block font-semibold" for="qr-photo">Elegir imagen del QR (PNG descargado o galería)</label>
-      <input id="qr-photo" type="file" accept="image/*" class="block w-full">
-      <label class="block font-semibold" for="qr-camera">Tomar una foto del QR</label>
-      <input id="qr-camera" type="file" accept="image/*" capture="environment" class="block w-full">
-    </div>
-    <p class="text-sm">Para cargar el PNG descargado usa «Elegir imagen». Para fotografiar una tarjeta usa «Tomar una foto». La cámara en vivo necesita HTTPS o localhost.</p>
-    <p id="scan-status" role="status" aria-live="polite" class="rounded bg-slate-100 p-3">Listo para escanear.</p>
-  </section>
-</main>
+{% set menu = [('inicio','Resumen'),('clubes','Clubes'),('penalizaciones','Penalizaciones'),('incidentes','Incidentes'),('evaluar','Evaluar')] %}
+<div class="staff-app scanner-app" data-panel-theme>
+  <aside class="staff-sidebar">
+    <a href="{{ url_for('panel_staff') }}" class="staff-brand"><span class="staff-logo">S<span>↗</span></span><span>ScoreUp<small>ESPACIO DEL STAFF</small></span></a>
+    <p class="staff-nav-label">TU ESPACIO DE TRABAJO</p>
+    <nav aria-label="Secciones del staff" class="staff-nav">
+      {% for key, label in menu %}<a href="{{ url_for('panel_staff', vista=key) }}" class="{{ 'is-active' if key == 'evaluar' else '' }}">{{ icon(key) }}<span>{{ label }}</span></a>{% endfor %}
+    </nav>
+    <div class="staff-sidebar-note">{{ icon('evaluar') }}<strong>Un QR, el evento correcto.</strong><p>El código identifica al club. Tu cuenta selecciona el evento y sus criterios.</p></div>
+    <div class="staff-profile"><span class="staff-avatar">{{ user.nombre[0] }}</span><div><strong>{{ user.nombre }}</strong><small>Staff evaluador</small></div><a href="{{ url_for('logout') }}">Salir</a></div>
+  </aside>
+  <div class="staff-workspace">
+    <header class="staff-topbar"><span>Panel de staff <span class="staff-separator">/</span> <strong>Escanear QR</strong></span><span class="staff-badge {{ 'is-muted' if evento.cerrado else 'is-green' }}">{{ 'Solo lectura' if evento.cerrado else 'Evento abierto' }}</span></header>
+    <main class="staff-main">
+      <section class="staff-hero">
+        <div><span class="staff-eyebrow">EVALUACIÓN POR QR · STAFF</span><h1>Escanear QR del club</h1><p>{{ evento.nombre }}</p><div class="staff-event-meta"><span>{{ user.nombre }}</span><span>Un escaneo te lleva a la ficha del club.</span></div></div>
+        <div class="scanner-hero-icon">{{ icon('evaluar') }}</div>
+      </section>
+      {% if evento.cerrado %}<p class="staff-notice is-warning">Evento cerrado: solo podrás consultar la evaluación.</p>{% endif %}
+      <div class="scanner-grid">
+        <section class="staff-card scanner-reader" aria-labelledby="reader-title">
+          <div class="staff-section-title"><div><span class="staff-eyebrow">LECTOR DEL CLUB</span><h2 id="reader-title">Apunta. Escanea. Evalúa.</h2></div><span class="staff-badge is-muted">QR</span></div>
+          <div class="scanner-viewfinder">
+            <div class="scanner-placeholder"><span class="scanner-qr-symbol">{{ icon('evaluar') }}</span><strong>Coloca el QR dentro de la cámara</strong><p>Conserva el borde blanco y busca buena luz.</p></div>
+            <video id="preview" hidden playsinline muted></video>
+            <span class="scanner-corners" aria-hidden="true"></span>
+          </div>
+          <canvas id="scan-canvas" hidden></canvas>
+          <div class="scanner-camera-actions">
+            <button id="start-camera" type="button" class="staff-button">Activar cámara</button>
+            <button id="stop-camera" type="button" hidden class="staff-button is-secondary">Detener cámara</button>
+          </div>
+          <p id="scan-status" role="status" aria-live="polite" class="scanner-status">Listo para escanear.</p>
+          <p class="scanner-help">La cámara en vivo necesita HTTPS o localhost. Si entras desde el celular por la red local, puedes usar una foto.</p>
+        </section>
+        <div class="scanner-side">
+          <section class="staff-card scanner-import" aria-labelledby="photo-title">
+            <span class="staff-eyebrow">TAMBIÉN PUEDES USAR UNA FOTO</span><h2 id="photo-title">Elige cómo leer tu QR</h2>
+            <div class="scanner-upload"><label for="qr-photo">Elegir imagen del QR <small>PNG descargado o imagen de tu galería</small></label><input id="qr-photo" type="file" accept="image/*"></div>
+            <div class="scanner-upload"><label for="qr-camera">Tomar una foto del QR <small>Fotografía la tarjeta con tu celular</small></label><input id="qr-camera" type="file" accept="image/*" capture="environment"></div>
+            <p class="scanner-help">Tus fotos se procesan en este dispositivo. No se suben al servidor.</p>
+          </section>
+          <section class="staff-card scanner-tips"><span class="staff-eyebrow">DEL CÓDIGO A LA FICHA</span><h2>Tu evento, sin vueltas.</h2><ol><li><b>1</b><span>Escanea el QR completo del club.</span></li><li><b>2</b><span>ScoreUp abre su ficha en tu evento.</span></li><li><b>3</b><span>Revisa los criterios y registra la evaluación.</span></li></ol><a href="{{ url_for('panel_staff', vista='evaluar') }}" class="staff-text-link">← Volver a evaluar</a></section>
+        </div>
+      </div>
+      <footer class="staff-footer">ScoreUp · Evaluaciones claras, eventos mejor organizados.</footer>
+    </main>
+  </div>
+</div>
 <script src="{{ url_for('static', filename='vendor/jsQR.js') }}"></script>
 <script src="{{ url_for('static', filename='scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='panel-effects.js') }}"></script>
 {% endblock %}

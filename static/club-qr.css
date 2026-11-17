@@ -1,0 +1,39 @@
+/* Tarjeta del club integrada en administración; impresión limpia y QR intacto. */
+.club-qr-hero{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.club-qr-hero h1{margin:6px 0 10px}.club-qr-hero p{max-width:560px;line-height:1.8;color:#e3edff}
+.admin-management .club-qr-page .admin-button.is-secondary{background:#edf3ff;color:#3e6fc6;border-color:#dce7fc}
+.admin-management .club-qr-hero .admin-button.is-secondary{background:#ffffff18;color:#fff;border-color:#ffffff55}
+.club-qr-eyebrow{font-size:10px;font-weight:700;letter-spacing:1.6px;color:#7b97bd}
+.club-qr-hero .club-qr-eyebrow{color:#c7dcff}.club-qr-hero .admin-button{flex-shrink:0}
+.club-qr-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start}
+.club-qr-grid>*{min-width:0}.club-qr-side{display:grid;gap:24px}
+.club-qr-card,.club-qr-settings,.club-qr-guide{padding:28px;border:1px solid #e3ebf8;border-radius:18px;background:white}
+.club-qr-card{text-align:center}.club-qr-card h2{margin:10px 0 6px;font-size:30px;letter-spacing:-.7px;overflow-wrap:anywhere;color:#203e64}
+.club-qr-subtitle,.club-qr-account,.club-qr-settings>p{font-size:12px;color:#7589a4;line-height:1.8}
+.club-qr-image{background:#fff;border:1px solid #e3ebf8;border-radius:18px;margin:24px auto 18px;max-width:384px;overflow:hidden}
+.club-qr-image img{display:block;width:100%;height:auto;image-rendering:pixelated}
+.club-qr-instruction{font-size:13px;font-weight:600;color:#365d91}
+.club-qr-link{padding:12px;border-radius:10px;background:#f4f7ff;overflow-wrap:anywhere;font-size:11px;line-height:1.8}.club-qr-link a{color:#4876cc}
+.club-qr-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:24px}
+.club-qr-actions .admin-button{min-height:45px;justify-content:center}
+.club-qr-settings h2,.club-qr-guide h2{font-size:20px;letter-spacing:-.4px;color:#25466e;margin:8px 0 12px}
+.club-qr-settings form{margin:22px 0 16px;display:grid;gap:12px}.club-qr-settings label{font-size:12px;color:#3e5c83;font-weight:600}
+.admin-management .club-qr-settings input{width:100%;min-width:0;padding:12px;border-radius:10px;border:1px solid #dbe5f7;background:#f8faff;color:#45648c;font-size:13px}
+.club-qr-settings form .admin-button{justify-self:start;min-height:44px}
+.club-qr-help{font-size:11px;color:#8193ac;line-height:1.8;margin:0}
+.club-qr-guide ol{display:grid;gap:18px;list-style:none;padding:0;margin:24px 0}
+.club-qr-guide li{display:flex;align-items:center;gap:12px;font-size:12px;color:#617b9c;line-height:1.8}
+.club-qr-guide li b{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:10px;background:#eaf1ff;color:#4d7dd2}
+.club-qr-print-tip{background:#fff7ec;border:1px solid #f9e6cf;border-radius:12px;padding:16px;color:#936e40;font-size:12px;line-height:1.8}.club-qr-print-tip p{margin:6px 0 0}
+.club-qr-warning{padding:16px 20px;margin:0 0 24px;border:1px solid #f4dfc4;border-radius:13px;background:#fff7ec;color:#936e40;font-size:13px;line-height:1.8}
+@media(max-width:1100px){.club-qr-grid{grid-template-columns:1fr}.club-qr-side{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}}
+@media(max-width:760px){.club-qr-hero{align-items:flex-start;flex-direction:column;gap:16px}.club-qr-grid,.club-qr-side{grid-template-columns:1fr;gap:18px}.club-qr-card,.club-qr-settings,.club-qr-guide{padding:20px}.club-qr-card h2{font-size:26px}.club-qr-eyebrow{font-size:9px;letter-spacing:1.2px}.club-qr-actions{flex-direction:column}.club-qr-actions .admin-button{width:100%}.club-qr-image{margin-top:20px}.admin-management .club-qr-settings input{font-size:16px}.club-qr-settings form .admin-button{width:100%;justify-content:center}.club-qr-hero p{font-size:12px}}
+@media print{
+  @page{margin:15mm}
+  body.admin-shell{background:white!important;color:#172a3c}
+  .admin-sidebar,.admin-topbar,.admin-breadcrumb,.admin-management-footer,.club-qr-hero,.club-qr-warning,.club-qr-side,.club-qr-actions,.admin-flash,.admin-mobile-backdrop{display:none!important}
+  .admin-workspace{margin:0!important;min-height:0!important}.admin-main{padding:0!important;max-width:none!important}
+  .club-qr-grid{display:block}.club-qr-card{border:1px solid #d8dfe8;box-shadow:none!important;padding:10mm;max-width:150mm;margin:0 auto;break-inside:avoid;opacity:1!important;transform:none!important}
+  .club-qr-card h2{color:black}.club-qr-image{width:70mm;max-width:100%;border:0;border-radius:0;margin:6mm auto}.club-qr-image img{width:100%;height:auto}
+  .club-qr-link{background:white;padding:0;font-size:9px}.club-qr-link a{color:black}.club-qr-account,.club-qr-subtitle{color:#43536b}
+}

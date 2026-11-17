@@ -13,6 +13,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 def main():
+    output = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    if output:
+        output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="scoreup-browser-") as directory:
         os.environ["SCOREUP_DB"] = str(Path(directory) / "test.db")
         os.environ["SECRET_KEY"] = "browser-test-only"
@@ -45,6 +48,31 @@ def main():
 
                 login("admin", "admin")
                 page.goto(base + "/admin/clubes/club-1/qr")
+                for width in [1440, 390, 320]:
+                    page.set_viewport_size({"width": width, "height": 1000})
+                    assert page.locator('.club-qr-card').is_visible()
+                    assert page.locator('.admin-nav-link.is-active span').inner_text() == 'Clubes'
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
+                    assert page.locator('.club-qr-image img').evaluate('(image) => image.complete && image.naturalWidth > 0')
+                    assert page.get_by_role('link', name='Descargar PNG').evaluate('(link) => getComputedStyle(link).color !== "rgb(255, 255, 255)"')
+                    if output:
+                        page.screenshot(path=str(output / f'qr-admin-{width}.png'), full_page=True)
+                page.emulate_media(media='print')
+                assert page.locator('.admin-sidebar').is_hidden()
+                assert page.locator('.club-qr-side').is_hidden()
+                assert page.locator('.club-qr-actions').is_hidden()
+                assert page.locator('.club-qr-card').is_visible()
+                assert page.locator('.club-qr-image img').bounding_box()['width'] >= 226
+                if output:
+                    page.pdf(path=str(output / 'qr-tarjeta.pdf'), format='A4')
+                page.emulate_media(media='screen')
+                page.set_viewport_size({"width": 390, "height": 844})
+                page.locator('#base_url').fill('http://192.168.1.50:5000')
+                page.get_by_role('button', name='Actualizar QR', exact=True).click()
+                assert page.locator('.club-qr-link').inner_text().startswith('http://192.168.1.50:5000/qr/')
+                page.goto(base + '/admin/clubes/club-1/qr?base_url=http://localhost:5000')
+                assert page.locator('.club-qr-warning').is_visible()
+                page.goto(base + '/admin/clubes/club-1/qr')
                 with page.expect_download() as pending:
                     page.get_by_role("link", name="Descargar PNG").click()
                 qr_file = Path(directory) / "club.png"
@@ -53,6 +81,16 @@ def main():
                 login("tomas", "staff")
                 page.get_by_role("link", name="Escanear QR de un club").click()
                 page.wait_for_load_state("load")
+                # Mismo dashboard sin desbordamiento en escritorio y teléfono.
+                for width in [1440, 390, 320]:
+                    page.set_viewport_size({"width": width, "height": 900})
+                    assert page.locator('.staff-sidebar').is_visible()
+                    assert page.locator('h1').inner_text() == 'Escanear QR del club'
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
+                    assert page.locator('#start-camera').is_visible()
+                    assert page.locator('#stop-camera').is_hidden()
+                    assert page.locator('#preview').is_hidden()
+                page.set_viewport_size({"width": 390, "height": 844})
                 assert page.locator('#qr-photo').get_attribute('capture') is None
                 assert page.locator('#qr-camera').get_attribute('capture') == 'environment'
                 page.locator("#qr-photo").set_input_files(qr_file)

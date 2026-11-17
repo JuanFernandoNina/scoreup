@@ -22,6 +22,43 @@ from PIL import Image
 
 
 class ScoreUpTests(unittest.TestCase):
+    def test_shared_demo_preparation_and_preserved_results(self):
+        from scripts.preparar_demo import preparar, SOURCE
+        from werkzeug.security import check_password_hash
+        destination = Path(self.directory.name) / 'friend.db'
+        passwords = {'admin': 'admin-test-only-2026', 'staff': 'staff-test-only-2026', 'director': 'director-test-only-2026'}
+        source_bytes = SOURCE.read_bytes()
+        preparar(destination, passwords)
+        self.assertEqual(SOURCE.read_bytes(), source_bytes)
+        with closing(sqlite3.connect(destination)) as connection:
+            for username, role, password in connection.execute('SELECT username,rol,password FROM users'):
+                self.assertTrue(check_password_hash(password, passwords[role]), username)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM eventos WHERE id LIKE 'ev-camp-%' AND cerrado=1").fetchone()[0], 4)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM evaluaciones WHERE evento_id LIKE 'ev-demo-20261117-%'").fetchone()[0], 0)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM penalizaciones WHERE id LIKE 'pen-demo-20261117-%'").fetchone()[0], 5)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM incidentes WHERE foto_url IS NOT NULL AND foto_url != ''").fetchone()[0], 0)
+        before = destination.read_bytes()
+        with self.assertRaises(FileExistsError):
+            preparar(destination, passwords)
+        self.assertEqual(destination.read_bytes(), before)
+        persist.DB_PATH = str(destination)
+        for username, role, path in [('admin.campamento', 'admin', '/admin'), ('staff.campamento', 'staff', '/staff'), ('director.campamento', 'director', '/director')]:
+            self.client.get('/logout')
+            response = self.post('/login', {'username': username, 'password': passwords[role]})
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(response.location.endswith(path))
+            panel = self.client.get(path)
+            self.assertEqual(panel.status_code, 200)
+            if role == 'director':
+                self.assertIn(b'333.36', panel.data)
+
+    def test_shared_demo_rejects_short_or_missing_passwords(self):
+        from scripts.preparar_demo import preparar
+        destination = Path(self.directory.name) / 'invalid.db'
+        with self.assertRaises(ValueError):
+            preparar(destination, {'admin': 'short'})
+        self.assertFalse(destination.exists())
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(prefix="scoreup-test-")
         self.addCleanup(self.directory.cleanup)
@@ -181,6 +218,42 @@ class ScoreUpTests(unittest.TestCase):
         self.assertIn(b'5 clubes en el puesto 1', response.data)
         self.assertIn(b'Hay posiciones compartidas', response.data)
 
+    def test_projection_local_dashboard_scopes_and_ties(self):
+        db = persist.load()
+        db['evaluaciones'] = [e for e in db['evaluaciones'] if e.evento_id != 'ev-3']
+        persist.save(db)
+        self.as_user('user-admin')
+        response = self.client.get('/admin/mostrar-resultado')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'projection.css', response.data)
+        self.assertIn(b'admin-sidebar', response.data)
+        self.assertNotIn(b'cdn.tailwindcss.com', response.data)
+        response = self.client.get('/admin/mostrar-resultado?scope=evento')
+        self.assertIn(b'Selecciona un evento', response.data)
+        self.assertNotIn(b'class="projection-podium"', response.data)
+        response = self.client.get('/admin/mostrar-resultado?scope=evento&evento_id=ev-3')
+        self.assertIn('Todavía no hay resultados'.encode(), response.data)
+        db = persist.load()
+        for evaluation in db['evaluaciones']:
+            evaluation.valores = {key: 0 for key in evaluation.valores}
+        db['penalizaciones'] = []
+        persist.save(db)
+        response = self.client.get('/admin/mostrar-resultado')
+        positions = re.findall(rb'class="projection-position">([^<]+)', response.data)
+        self.assertEqual(positions, ['1°'.encode()] * 3)
+
+    def test_projection_empty_tenant_and_roles(self):
+        self.assertEqual(self.client.get('/admin/mostrar-resultado').status_code, 302)
+        self.as_user('user-staff4')
+        self.assertEqual(self.client.get('/admin/mostrar-resultado').status_code, 403)
+        with self.client.session_transaction() as session:
+            session.clear()
+        self.post('/registro', {'nombre': 'Admin aislado', 'username': 'projection-propio', 'password': 'solo-testing-123', 'organizacion': 'Proyeccion aislada'})
+        response = self.client.get('/admin/mostrar-resultado')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Todavía no hay resultados'.encode(), response.data)
+        self.assertNotIn(b'Tigres del Valle', response.data)
+
     def test_landing_is_public_local_and_illustrative(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
@@ -293,6 +366,10 @@ class ScoreUpTests(unittest.TestCase):
         response = self.client.get("/admin/clubes/club-1/qr")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"192.168.1.10:5000/qr/", response.data)
+        self.assertIn(b'class="admin-panel club-qr-card"', response.data)
+        self.assertIn(b'club-qr.css', response.data)
+        self.assertIn(b'aria-current="page"', response.data)
+        self.assertNotIn(b'cdn.tailwindcss.com', response.data)
         response = self.client.get("/admin/clubes/club-1/qr?formato=png")
         self.assertEqual(response.mimetype, "image/png")
         image = Image.open(io.BytesIO(response.data))
@@ -328,7 +405,12 @@ class ScoreUpTests(unittest.TestCase):
         response = self.client.get("/staff/escanear")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Campamento Regional", response.data)
-        for path in ["/static/scanner.js", "/static/vendor/jsQR.js"]:
+        self.assertIn(b'data-panel-theme', response.data)
+        self.assertIn(b'class="staff-sidebar"', response.data)
+        self.assertNotIn(b'cdn.tailwindcss.com', response.data)
+        for control in ['preview', 'scan-canvas', 'scan-status', 'start-camera', 'stop-camera', 'qr-photo', 'qr-camera']:
+            self.assertEqual(response.data.count(f'id="{control}"'.encode()), 1)
+        for path in ["/static/scanner.js", "/static/vendor/jsQR.js", "/static/scanner.css", "/static/staff.css", "/static/panel-theme.css", "/static/mobile-panels.css"]:
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             response.close()

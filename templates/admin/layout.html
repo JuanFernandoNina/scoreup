@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='admin-management.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body class="admin-shell" data-panel-theme>
   <aside class="admin-sidebar" id="admin-sidebar">

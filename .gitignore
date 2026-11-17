@@ -38,3 +38,6 @@ static/uploads/*.webp
 *.sqlite3-*
 *.sqlite3.*
 /static/uploads/
+
+# Única base pública permitida: copia de demostración anonimizada y sin accesos activos.
+!/demo/scoreup-demo.db

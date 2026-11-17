@@ -1,13 +1,5 @@
 {% extends 'base.html' %}
-{% macro icon(name) -%}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-{% if name == 'clubes' %}<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-{% elif name == 'penalizaciones' %}<path d="m12 3 9 17H3L12 3Z"/><path d="M12 9v4m0 3h.01"/>
-{% elif name == 'incidentes' %}<path d="M19 13V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16l4-3h8a2 2 0 0 0 2-2Z"/><path d="M9 8h6m-6 4h4"/>
-{% elif name == 'evaluar' %}<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h3v3h3m-6 3h3m3-9v3"/>
-{% else %}<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>{% endif %}
-</svg>
-{%- endmacro %}
+{% from 'staff/_icons.html' import icon %}
 {% block title %}ScoreUp · Panel de staff{% endblock %}
 {% block framework_styles %}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='staff.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">{% endblock %}
