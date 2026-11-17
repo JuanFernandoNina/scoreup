@@ -9,6 +9,7 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from contextlib import closing
+from unittest.mock import patch
 
 _startup = tempfile.TemporaryDirectory(prefix="scoreup-tests-")
 os.environ["SCOREUP_DB"] = str(Path(_startup.name) / "startup.db")
@@ -145,6 +146,53 @@ class ScoreUpTests(unittest.TestCase):
         response = self.client.get("/director")
         self.assertIn(b"Campamento Regional", response.data)
         self.assertIn(b"0 pts", response.data)
+
+    def test_director_dashboard_displays_own_club_qr(self):
+        self.as_user("user-dir1")
+        response = self.client.get("/director")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'id="qr-de-mi-club"', response.data)
+        self.assertIn(b'src="/director/qr.png"', response.data)
+        self.assertIn(b'Descargar QR en PNG', response.data)
+        self.assertNotIn(b"/admin/clubes/club-2/qr", response.data)
+
+    def test_director_qr_matches_admin_card_and_does_not_write(self):
+        self.as_user("user-admin")
+        admin = self.client.get("/admin/clubes/club-1/qr?formato=png")
+        self.as_user("user-dir1")
+        before = Path(persist.DB_PATH).read_bytes()
+        response = self.client.get("/director/qr.png")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "image/png")
+        self.assertEqual(response.data, admin.data)
+        self.assertTrue(response.headers["Content-Disposition"].startswith("inline"))
+        self.assertEqual(Path(persist.DB_PATH).read_bytes(), before)
+        image = Image.open(io.BytesIO(response.data))
+        self.assertEqual(image.format, "PNG")
+        download = self.client.get("/director/qr.png?descargar=1")
+        self.assertTrue(download.headers["Content-Disposition"].startswith("attachment"))
+        self.assertEqual(download.data, response.data)
+
+    def test_director_qr_cannot_select_other_club_or_server(self):
+        self.as_user("user-dir1")
+        expected = self.client.get("/director/qr.png").data
+        attempted = self.client.get("/director/qr.png?club_id=club-2&base_url=https://example.com").data
+        self.assertEqual(attempted, expected)
+        self.as_user("user-dir2")
+        self.assertNotEqual(self.client.get("/director/qr.png").data, expected)
+
+    def test_director_qr_requires_role_and_valid_own_club(self):
+        self.assertEqual(self.client.get("/director/qr.png").status_code, 302)
+        for user_id in ("user-admin", "user-staff4"):
+            self.as_user(user_id)
+            self.assertEqual(self.client.get("/director/qr.png").status_code, 403)
+        db = persist.load()
+        db["clubs"].append(data.Club("foreign-director-qr", "Ajeno", "org-foreign"))
+        for club_id in (None, "missing-club", "foreign-director-qr"):
+            calc.find(db, "users", "id", "user-dir1").club_id = club_id
+            persist.save(db)
+            self.as_user("user-dir1")
+            self.assertEqual(self.client.get("/director/qr.png").status_code, 404)
 
     def test_qr_login_return_and_focus(self):
         db = persist.load()
@@ -407,8 +455,10 @@ class ScoreUpTests(unittest.TestCase):
         self.assertIn(b"Campamento Regional", response.data)
         self.assertIn(b'data-panel-theme', response.data)
         self.assertIn(b'class="staff-sidebar"', response.data)
+        self.assertNotIn(b'<label for="qr-camera">', response.data)
+        self.assertIn(b'capture="environment" hidden', response.data)
         self.assertNotIn(b'cdn.tailwindcss.com', response.data)
-        for control in ['preview', 'scan-canvas', 'scan-status', 'start-camera', 'stop-camera', 'qr-photo', 'qr-camera']:
+        for control in ['preview', 'scan-canvas', 'scan-status', 'start-camera', 'start-live-camera', 'stop-camera', 'qr-photo', 'qr-camera']:
             self.assertEqual(response.data.count(f'id="{control}"'.encode()), 1)
         for path in ["/static/scanner.js", "/static/vendor/jsQR.js", "/static/scanner.css", "/static/staff.css", "/static/panel-theme.css", "/static/mobile-panels.css"]:
             response = self.client.get(path)
@@ -551,6 +601,93 @@ class ScoreUpTests(unittest.TestCase):
             response = self.client.get("/admin/exportar?formato=" + fmt)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.mimetype, mime)
+
+    def test_qreader_permissions_csrf_and_missing_image(self):
+        route = "/staff/escanear/imagen"
+        self.assertEqual(self.post(route).status_code, 302)
+        self.as_user("user-admin")
+        self.assertEqual(self.post(route).status_code, 403)
+        self.as_user("user-staff4")
+        self.assertEqual(self.client.post(route).status_code, 400)
+        self.assertEqual(self.post(route).status_code, 400)
+
+    def test_qreader_opens_only_signed_participating_club_without_writes(self):
+        self.as_user("user-staff4")
+        club = calc.find(persist.load(), "clubs", "id", "club-1")
+        path = "/qr/" + web._token_club(club)
+        before = Path(persist.DB_PATH).read_bytes()
+        with patch("qr_reader.decode_image", return_value=("http://old-ip.invalid:5000" + path,)):
+            response = self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"mocked-image"), "qr.jpg")})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, {"path": path, "reader": "qreader"})
+        self.assertEqual(Path(persist.DB_PATH).read_bytes(), before)
+        self.assertEqual(self.client.get(path).status_code, 302)
+
+    def test_qreader_rejects_foreign_tampered_and_non_scoreup_codes(self):
+        db = persist.load()
+        foreign = data.Club("foreign-qr", "Privado", "other-org")
+        db["clubs"].append(foreign)
+        persist.save(db)
+        self.as_user("user-staff4")
+        for value in ["https://example.com", "/qr/invalid", "/qr/" + web._token_club(foreign), "javascript:alert(1)"]:
+            with patch("qr_reader.decode_image", return_value=(value,)):
+                response = self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"mocked"), "qr.jpg")})
+            self.assertEqual(response.status_code, 422, value)
+            self.assertNotIn("path", response.json)
+
+    def test_qreader_multiple_cards_and_legacy_signature(self):
+        from itsdangerous import URLSafeSerializer
+        self.as_user("user-staff4")
+        clubs = persist.load()["clubs"][:2]
+        paths = ["/qr/" + web._token_club(club) for club in clubs]
+        with patch("qr_reader.decode_image", return_value=paths):
+            response = self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"mocked"), "qr.jpg")})
+            self.assertEqual(response.status_code, 422)
+        legacy = URLSafeSerializer(web.app.secret_key, salt="scoreup-club-qr-v1").dumps({"org": "org-1", "club": clubs[0].id})
+        with patch("qr_reader.decode_image", return_value=("/qr/" + legacy,)):
+            response = self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"mocked"), "qr.jpg")})
+            self.assertEqual(response.status_code, 200)
+
+    def test_qreader_invalid_image_and_unavailable_service(self):
+        from qr_reader import QRReaderUnavailable, QRReaderBusy
+        self.as_user("user-staff4")
+        self.assertEqual(self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"not-image"), "qr.jpg")}).status_code, 400)
+        for error in [QRReaderUnavailable("private-details"), QRReaderBusy("Lector ocupado")]:
+            with patch("qr_reader.decode_image", side_effect=error):
+                response = self.post("/staff/escanear/imagen", {"imagen": (io.BytesIO(b"mocked"), "qr.jpg")})
+            self.assertEqual(response.status_code, 503)
+            self.assertNotIn(b"private-details", response.data)
+
+    def test_projection_clean_screen_preserves_positions_without_admin_controls(self):
+        self.as_user("user-admin")
+        response = self.client.get("/admin/mostrar-resultado?pantalla=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"scoreboard.css", response.data)
+        for forbidden in [b"admin-sidebar", b"<form", b"<button", b"<select", b"cdn."]:
+            self.assertNotIn(forbidden, response.data)
+        ranking = calc.ranking_temporada(persist.load(), "2026")["filas"]
+        self.assertEqual(response.data.count(b'<article class="scoreboard-row'), len(ranking))
+        self.assertIn(b'class="scoreboard-podium"', response.data)
+        self.assertIn(b'class="scoreboard-rest"', response.data)
+        podio, resto = response.data.split(b'<section class="scoreboard-rest"', 1)
+        self.assertEqual(podio.count(b'<article class="scoreboard-row is-top"'), 3)
+        anteriores = [blob.index(row["club"].nombre.encode()) for blob, row in
+                      ((podio, row) for row in ranking[:3])]
+        self.assertEqual(anteriores, sorted(anteriores))
+        self.assertNotIn(ranking[0]["club"].nombre.encode(), resto)
+        posteriores = [resto.index(row["club"].nombre.encode()) for row in ranking[3:]]
+        self.assertEqual(posteriores, sorted(posteriores))
+        self.as_user("user-staff4")
+        self.assertEqual(self.client.get("/admin/mostrar-resultado?pantalla=1").status_code, 403)
+
+    def test_projection_clean_screen_event_and_missing_selection(self):
+        self.as_user("user-admin")
+        response = self.client.get("/admin/mostrar-resultado?pantalla=1&scope=evento")
+        self.assertIn(b"Selecciona un evento", response.data)
+        self.assertNotIn(b"scoreboard-row ", response.data)
+        response = self.client.get("/admin/mostrar-resultado?pantalla=1&scope=evento&evento_id=ev-1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.count(b'<article class="scoreboard-row'), 5)
 
     def test_valid_and_invalid_evidence(self):
         self.as_user("user-staff4")

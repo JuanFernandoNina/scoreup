@@ -3,6 +3,7 @@
 {% block title %}ScoreUp · Escanear QR{% endblock %}
 {% block framework_styles %}{% endblock %}
 {% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='staff.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='panel-theme.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='mobile-panels.css') }}">
@@ -32,24 +33,26 @@
         <section class="staff-card scanner-reader" aria-labelledby="reader-title">
           <div class="staff-section-title"><div><span class="staff-eyebrow">LECTOR DEL CLUB</span><h2 id="reader-title">Apunta. Escanea. Evalúa.</h2></div><span class="staff-badge is-muted">QR</span></div>
           <div class="scanner-viewfinder">
-            <div class="scanner-placeholder"><span class="scanner-qr-symbol">{{ icon('evaluar') }}</span><strong>Coloca el QR dentro de la cámara</strong><p>Conserva el borde blanco y busca buena luz.</p></div>
+            <div class="scanner-placeholder"><span class="scanner-qr-symbol">{{ icon('evaluar') }}</span><strong>Fotografía el QR de tu club</strong><p>Pulsa Activar cámara, enfoca y confirma la foto.</p></div>
             <video id="preview" hidden playsinline muted></video>
             <span class="scanner-corners" aria-hidden="true"></span>
           </div>
           <canvas id="scan-canvas" hidden></canvas>
           <div class="scanner-camera-actions">
             <button id="start-camera" type="button" class="staff-button">Activar cámara</button>
+            <input id="qr-camera" type="file" accept="image/*" capture="environment" hidden aria-label="Fotografiar el QR">
+            <button id="start-live-camera" type="button" hidden class="staff-button is-secondary">Escaneo en vivo</button>
             <button id="stop-camera" type="button" hidden class="staff-button is-secondary">Detener cámara</button>
           </div>
           <p id="scan-status" role="status" aria-live="polite" class="scanner-status">Listo para escanear.</p>
-          <p class="scanner-help">La cámara en vivo necesita HTTPS o localhost. Si entras desde el celular por la red local, puedes usar una foto.</p>
+          <p class="scanner-help">Activar cámara abre la opción de tomar una foto del QR, también por Wi-Fi local sin HTTPS. Confirma la foto para leerla. El escaneo en vivo es opcional y aparece solo en navegadores compatibles.</p>
         </section>
         <div class="scanner-side">
           <section class="staff-card scanner-import" aria-labelledby="photo-title">
             <span class="staff-eyebrow">TAMBIÉN PUEDES USAR UNA FOTO</span><h2 id="photo-title">Elige cómo leer tu QR</h2>
             <div class="scanner-upload"><label for="qr-photo">Elegir imagen del QR <small>PNG descargado o imagen de tu galería</small></label><input id="qr-photo" type="file" accept="image/*"></div>
-            <div class="scanner-upload"><label for="qr-camera">Tomar una foto del QR <small>Fotografía la tarjeta con tu celular</small></label><input id="qr-camera" type="file" accept="image/*" capture="environment"></div>
-            <p class="scanner-help">Tus fotos se procesan en este dispositivo. No se suben al servidor.</p>
+            <label class="scanner-help"><input id="qreader-enabled" type="checkbox" checked> Usar lectura avanzada QReader</label>
+            <p class="scanner-help" id="qreader-privacy">Con QReader, la foto o fotograma se envía al servidor de ScoreUp para leerlo y no se guarda en el historial. Desmarca la opción para procesar únicamente en tu dispositivo.</p>
           </section>
           <section class="staff-card scanner-tips"><span class="staff-eyebrow">DEL CÓDIGO A LA FICHA</span><h2>Tu evento, sin vueltas.</h2><ol><li><b>1</b><span>Escanea el QR completo del club.</span></li><li><b>2</b><span>ScoreUp abre su ficha en tu evento.</span></li><li><b>3</b><span>Revisa los criterios y registra la evaluación.</span></li></ol><a href="{{ url_for('panel_staff', vista='evaluar') }}" class="staff-text-link">← Volver a evaluar</a></section>
         </div>
@@ -59,6 +62,6 @@
   </div>
 </div>
 <script src="{{ url_for('static', filename='vendor/jsQR.js') }}"></script>
-<script src="{{ url_for('static', filename='scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='scanner.js', v='camera-photo-2') }}" data-reader-url="{{ url_for('staff_escanear_imagen') }}"></script>
 <script src="{{ url_for('static', filename='panel-effects.js') }}"></script>
 {% endblock %}

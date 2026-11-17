@@ -29,6 +29,9 @@ static/uploads/*.webp
 # Sitio compilado de MkDocs
 /site/
 
+# Estáticos generados para Vercel
+/public/
+
 # No publicar bases locales, respaldos ni evidencias privadas.
 *.db
 *.db-*
@@ -41,3 +44,6 @@ static/uploads/*.webp
 
 # Única base pública permitida: copia de demostración anonimizada y sin accesos activos.
 !/demo/scoreup-demo.db
+
+# Respaldos privados de instalaciones Docker
+/respaldos/

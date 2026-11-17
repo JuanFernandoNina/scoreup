@@ -6,17 +6,19 @@ import string
 import uuid
 import math
 import threading
+import re
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlsplit
 from datetime import datetime
 
-from flask import Flask, render_template, request, redirect, session, url_for, abort, flash, send_file, g
+from flask import Flask, render_template, request, redirect, session, url_for, abort, flash, send_file, g, jsonify
 from flask_wtf.csrf import CSRFProtect
 from itsdangerous import URLSafeSerializer, BadSignature
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import data as seed_data
-import persist
+import store
 from calc import (
     ranking_evento, ranking_temporada, evaluacion_principal, actividad_staff,
     porcentaje_ponderado, fmt_pts, fmt_fecha, find,
@@ -27,6 +29,8 @@ def _secret_key():
     configured = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET")
     if configured:
         return configured
+    if store.is_cloud():
+        raise RuntimeError("SECRET_KEY es obligatoria en Vercel; configúrala como variable de entorno.")
     path = Path(__file__).with_name(".secret_key")
     try:
         with path.open("x", encoding="utf-8") as file:
@@ -38,8 +42,14 @@ def _secret_key():
 
 app.secret_key = _secret_key()
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+public_base = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+if store.is_cloud() and not public_base:
+    public_base = os.environ.get("VERCEL_URL", "").strip()
+    if public_base and "://" not in public_base:
+        public_base = "https://" + public_base
+    public_base = public_base.rstrip("/")
 app.config.update(MAX_CONTENT_LENGTH=10 * 1024 * 1024, SESSION_COOKIE_HTTPONLY=True,
-                  SESSION_COOKIE_SAMESITE="Lax", PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", "").rstrip("/"))
+                  SESSION_COOKIE_SAMESITE="Lax", PUBLIC_BASE_URL=public_base)
 _db_lock = threading.RLock()
 _accesos_generados = {}
 
@@ -54,7 +64,7 @@ def _club_nombre(club_id, db):
 def _pct(evaluacion, criterios):
     return porcentaje_ponderado(evaluacion, criterios)
 
-DB = persist.load()
+DB = {} if store.is_cloud() else store.load()
 
 
 def _verificar_clave(guardada, clave):
@@ -70,11 +80,11 @@ def _abrir_transaccion():
     global DB
     _db_lock.acquire()
     g.db_locked = True
-    g.connection = persist.connect()
-    g.connection.execute("BEGIN IMMEDIATE" if request.method == "POST" else "BEGIN")
-    DB = persist.load(g.connection)
+    g.connection = store.connect()
+    store.begin(g.connection, write=request.method == "POST")
+    DB = store.load(g.connection)
     user = current_user()
-    if request.path.startswith(("/admin", "/staff")) or request.path == "/director":
+    if request.path.startswith(("/admin", "/staff", "/director")):
         if user is None:
             return redirect(url_for("login"))
     # Todas las operaciones que apuntan a un evento cerrado son inmutables.
@@ -96,7 +106,7 @@ def _confirmar_transaccion(response):
     conn = g.get("connection")
     if conn is not None:
         if request.method == "POST" and response.status_code < 400:
-            persist.save(DB, conn)
+            store.save(DB, conn)
             conn.commit()
         else:
             conn.rollback()
@@ -292,16 +302,8 @@ def qr_club(token):
     return redirect(url_for("panel_staff", club=club.id))
 
 
-@app.route("/admin/clubes/<club_id>/qr")
-def admin_club_qr(club_id):
-    import io
-    import qrcode
-    user = require_rol("admin")
-    club = find(DB, "clubs", "id", club_id)
-    if not club or club.organizacion_id != user.organizacion_id:
-        abort(404)
-    path = url_for("qr_club", token=_token_club(club))
-    base = (request.args.get("base_url") or app.config["PUBLIC_BASE_URL"] or request.url_root).strip().rstrip("/")
+def _qr_base_url(value):
+    base = value.strip().rstrip("/")
     try:
         parsed = urlsplit(base)
         valid_base = (parsed.scheme in {"http", "https"} and parsed.hostname and
@@ -313,18 +315,34 @@ def admin_club_qr(club_id):
         valid_base = False
     if not valid_base:
         abort(400, description="Usa una dirección como http://192.168.1.20:5000, sin rutas ni credenciales.")
-    link = base + path
+    return base, parsed
+
+
+def _club_qr_png(club, link, download=False):
+    import io
+    import qrcode
+
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=12, border=6)
+    qr.add_data(link)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="black", back_color="white")
+    output = io.BytesIO()
+    image.save(output, format="PNG")
+    output.seek(0)
+    return send_file(output, mimetype="image/png", as_attachment=download,
+                     download_name=f"scoreup-{club.id}-qr.png")
+
+
+@app.route("/admin/clubes/<club_id>/qr")
+def admin_club_qr(club_id):
+    user = require_rol("admin")
+    club = find(DB, "clubs", "id", club_id)
+    if not club or club.organizacion_id != user.organizacion_id:
+        abort(404)
+    base, parsed = _qr_base_url(request.args.get("base_url") or app.config["PUBLIC_BASE_URL"] or request.url_root)
+    link = base + url_for("qr_club", token=_token_club(club))
     if request.args.get("formato") == "png":
-        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M,
-                           box_size=12, border=6)
-        qr.add_data(link)
-        qr.make(fit=True)
-        image = qr.make_image(fill_color="black", back_color="white")
-        output = io.BytesIO()
-        image.save(output, format="PNG")
-        output.seek(0)
-        return send_file(output, mimetype="image/png", as_attachment=True,
-                         download_name=f"scoreup-{club.id}-qr.png")
+        return _club_qr_png(club, link, download=True)
     return render_template("admin/club_qr.html", club=club, link=link, user=user,
                            base_url=base, local_host=parsed.hostname in {"localhost", "127.0.0.1", "0.0.0.0", "::1", "::"})
 
@@ -976,8 +994,9 @@ def admin_mostrar_resultado():
     else:
         t = request.args.get("temporada", view["eventos"][0].temporada if view["eventos"] else "2026")
         filas = ranking_temporada(view, t)["filas"]
-    return render_template("admin/mostrar_resultado.html", user=user, db=view, scope=scope,
-                           filas=filas, evento=evento, fmt_pts=fmt_pts)
+    template = "admin/proyeccion_pantalla.html" if request.args.get("pantalla") == "1" else "admin/mostrar_resultado.html"
+    return render_template(template, user=user, db=view, scope=scope,
+                            filas=filas, evento=evento, fmt_pts=fmt_pts)
 
 
 @app.route("/admin/reportes")
@@ -1330,6 +1349,61 @@ def staff_escanear():
     return render_template("staff/escanear.html", user=user, evento=evento)
 
 
+@app.route("/staff/escanear/imagen", methods=["POST"])
+def staff_escanear_imagen():
+    user = require_rol("staff")
+    evento = find(DB, "eventos", "id", user.evento_id)
+    if not evento or evento.organizacion_id != user.organizacion_id:
+        abort(403)
+    allowed = {c.id for c in db_org(user)["clubs"] if any(
+        ec.evento_id == evento.id and ec.club_id == c.id for ec in DB["evento_club"]
+    )}
+    organization_id = user.organizacion_id
+    image = request.files.get("imagen")
+    if image is None:
+        return jsonify(error="Selecciona una fotografía del QR."), 400
+    from qr_reader import decode_image, MAX_IMAGE_BYTES, InvalidQRImage, QRReaderBusy, QRReaderUnavailable
+
+    content = image.read(MAX_IMAGE_BYTES + 1)
+    # La inferencia no escribe en la base ni debe bloquear otros usuarios.
+    # La ruta /qr vuelve a autorizar contra el estado vigente al abrir la ficha.
+    _cerrar_transaccion()
+    try:
+        codes = decode_image(content)
+    except InvalidQRImage as error:
+        return jsonify(error=str(error)), 400
+    except QRReaderBusy as error:
+        return jsonify(error=str(error), code="reader_busy"), 503, {"Retry-After": "3"}
+    except QRReaderUnavailable:
+        return jsonify(error="QReader no está disponible en este servidor. Usa la lectura local o avisa al administrador.", code="reader_unavailable"), 503
+    paths = set()
+    for value in codes:
+        if len(value) > 2048:
+            continue
+        try:
+            parsed = urlsplit(value)
+            if (parsed.scheme not in {"", "http", "https"} or parsed.query or parsed.fragment
+                    or parsed.username or parsed.password or not re.fullmatch(r"/qr/[A-Za-z0-9_.-]+", parsed.path)):
+                continue
+            token = parsed.path.removeprefix("/qr/")
+            try:
+                club_id = URLSafeSerializer(app.secret_key, salt="scoreup-club-qr-v2").loads(token)
+            except BadSignature:
+                legacy = URLSafeSerializer(app.secret_key, salt="scoreup-club-qr-v1").loads(token)
+                if not isinstance(legacy, dict) or legacy.get("org") != organization_id:
+                    continue
+                club_id = legacy.get("club")
+            if isinstance(club_id, str) and club_id in allowed:
+                paths.add(parsed.path)
+        except (ValueError, BadSignature):
+            continue
+    if len(paths) > 1:
+        return jsonify(error="Hay varios QR de clubes. Fotografía una sola tarjeta.", code="multiple_qr"), 422
+    if not paths:
+        return jsonify(error="No se encontró un QR válido de un club de tu evento. Acerca la tarjeta y enfoca el código completo."), 422
+    return jsonify(path=paths.pop(), reader="qreader")
+
+
 @app.route("/staff")
 def panel_staff():
     user = require_rol("staff")
@@ -1451,9 +1525,9 @@ def staff_incidente():
             abort(400, description="El archivo no contiene una imagen válida.")
         if ext in ALLOWED_EXT:
             nombre = f"{new_id('foto').replace('-', '')}.{ext}"
-            upload_dir = os.path.join(app.root_path, "static", "uploads")
-            os.makedirs(upload_dir, exist_ok=True)
-            foto.save(os.path.join(upload_dir, nombre))
+            foto.stream.seek(0)
+            mime = Image.MIME.get(image.format, foto.mimetype or "application/octet-stream")
+            store.save_evidence(nombre, foto.read(), mime, g.get("connection"))
             foto_url = url_for("evidencia", nombre=nombre)
     DB["incidentes"].append(seed_data.Incidente(
         new_id("inc"), evento.id, user.id,
@@ -1490,14 +1564,17 @@ def staff_penalizar():
 
 @app.route("/evidencias/<nombre>")
 def evidencia(nombre):
-    from flask import send_from_directory
     if current_user() is None:
         return redirect(url_for("login"))
     user = require_rol("admin", "staff")
     incidente = next((i for i in db_org(user)["incidentes"] if i.foto_url and i.foto_url.endswith("/" + nombre)), None)
     if not incidente:
         abort(404)
-    return send_from_directory(os.path.join(app.root_path, "static", "uploads"), nombre)
+    encontrado = store.read_evidence(nombre, g.get("connection"))
+    if encontrado is None:
+        abort(404)
+    contenido, mime = encontrado
+    return send_file(BytesIO(contenido), mimetype=mime, download_name=nombre, max_age=0)
 
 
 @app.before_request
@@ -1533,7 +1610,18 @@ def panel_director():
                 eventos_club.append({"evento": e, "puntaje": fila["puntaje"] if fila else None})
     eventos_club.sort(key=lambda x: x["evento"].fecha)
     return render_template("director/panel.html", user=user, db=view, club=club, season=season,
-                           eventos_club=eventos_club, fmt_pts=fmt_pts, fmt_fecha=fmt_fecha)
+                            eventos_club=eventos_club, fmt_pts=fmt_pts, fmt_fecha=fmt_fecha)
+
+
+@app.route("/director/qr.png")
+def director_club_qr():
+    user = require_rol("director")
+    club = find(DB, "clubs", "id", user.club_id) if user.club_id else None
+    if not club or club.organizacion_id != user.organizacion_id:
+        abort(404)
+    base, _ = _qr_base_url(app.config["PUBLIC_BASE_URL"] or request.url_root)
+    link = base + url_for("qr_club", token=_token_club(club))
+    return _club_qr_png(club, link, download=request.args.get("descargar") == "1")
 
 
 # --------------------------------------------------------------------------

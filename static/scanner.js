@@ -1,11 +1,20 @@
-/* Lectura local: las fotos no se suben al servidor. */
+/* jsQR local + lectura avanzada QReader en el servidor, con consentimiento visible. */
 (() => {
   const video = document.getElementById('preview');
   const canvas = document.getElementById('scan-canvas');
   const context = canvas.getContext('2d', { willReadFrequently: true });
   const status = document.getElementById('scan-status');
   const start = document.getElementById('start-camera');
+  const liveStart = document.getElementById('start-live-camera');
   const stopButton = document.getElementById('stop-camera');
+  liveStart.hidden = !window.isSecureContext || !navigator.mediaDevices?.getUserMedia;
+  const advanced = document.getElementById('qreader-enabled');
+  const readerUrl = document.currentScript.dataset.readerUrl;
+  const csrf = document.querySelector('meta[name="csrf-token"]').content;
+  let serverController = null;
+  let serverReading = false;
+  let lastServerRead = 0;
+  let liveServerAvailable = true;
   let stream = null;
   let frame = null;
   let starting = false;
@@ -13,6 +22,7 @@
   let readingPhoto = false;
   function stop() {
     generation += 1;
+    if (serverController) serverController.abort();
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
     if (stream) stream.getTracks().forEach(track => track.stop());
@@ -21,6 +31,7 @@
     video.hidden = true;
     stopButton.hidden = true;
     start.disabled = false;
+    liveStart.disabled = false;
   }
   function openCode(value) {
     try {
@@ -111,22 +122,79 @@
     }
     return null;
   }
+  async function decodeOnServer(source, width, height, current, quietMiss = false) {
+    if (serverReading) return null;
+    serverReading = true;
+    const controller = new AbortController();
+    serverController = controller;
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const capture = document.createElement('canvas');
+      const scale = Math.min(1, 2400 / Math.max(width, height));
+      capture.width = Math.max(1, Math.round(width * scale));
+      capture.height = Math.max(1, Math.round(height * scale));
+      capture.getContext('2d').drawImage(source, 0, 0, capture.width, capture.height);
+      const blob = await new Promise(resolve => capture.toBlob(resolve, 'image/jpeg', 0.94));
+      if (!blob || current !== generation || !advanced.checked) return null;
+      const form = new FormData();
+      form.append('imagen', blob, 'qr.jpg');
+      const response = await fetch(readerUrl, {
+        method: 'POST', body: form, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': csrf, 'Accept': 'application/json' }, signal: controller.signal,
+      });
+      if (current !== generation) return null;
+      if (response.redirected) throw new Error('Tu sesión pudo finalizar. Vuelve a iniciar sesión.');
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (quietMiss && (response.status === 422 || result.code === 'reader_busy')) return null;
+        const error = new Error(result.error || 'No se pudo leer la foto con QReader.');
+        error.code = result.code;
+        throw error;
+      }
+      return { data: result.path };
+    } finally {
+      clearTimeout(timeout);
+      if (serverController === controller) serverController = null;
+      serverReading = false;
+    }
+  }
   function scan() {
     if (!stream) return;
     if (video.readyState >= 2 && video.videoWidth) {
       const code = decode(video, video.videoWidth, video.videoHeight);
       if (code && openCode(code.data)) return;
+      if (advanced.checked && liveServerAvailable && !serverReading && performance.now() - lastServerRead > 3500) {
+        lastServerRead = performance.now();
+        const current = generation;
+        decodeOnServer(video, video.videoWidth, video.videoHeight, current, true).then(result => {
+          if (current === generation && result) openCode(result.data);
+        }).catch(error => {
+          if (current !== generation || error.name === 'AbortError') return;
+          liveServerAvailable = false;
+          status.textContent = 'QReader no pudo leer el fotograma. La lectura local continúa; también puedes tomar una foto.';
+        });
+      }
     }
     frame = requestAnimationFrame(scan);
   }
-  start.addEventListener('click', async () => {
+  function takePhoto() {
+    if (readingPhoto) return;
+    stop();
+    status.textContent = 'Toma una foto del QR completo. Se leerá al confirmar la fotografía.';
+    // Abrir dentro del gesto del usuario, sin esperar permisos de getUserMedia.
+    // capture="environment" solicita la cámara trasera en celulares compatibles.
+    document.getElementById('qr-camera').click();
+  }
+  start.addEventListener('click', takePhoto);
+  liveStart.addEventListener('click', async () => {
     if (starting || stream || readingPhoto) return;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-      status.textContent = 'Este navegador no permite cámara en vivo aquí. Usa «Elegir imagen», «Tomar una foto» o la cámara normal del celular.';
+      takePhoto();
       return;
     }
     starting = true;
     start.disabled = true;
+    liveStart.disabled = true;
     const current = ++generation;
     try {
       const camera = await navigator.mediaDevices.getUserMedia({ video: {
@@ -137,6 +205,8 @@
         return;
       }
       stream = camera;
+      liveServerAvailable = true;
+      lastServerRead = performance.now();
       video.srcObject = stream;
       video.hidden = false;
       stopButton.hidden = false;
@@ -145,10 +215,10 @@
       scan();
     } catch (_) {
       stop();
-      status.textContent = 'No se pudo abrir la cámara. Revisa el permiso o utiliza una foto del QR.';
+      status.textContent = 'No se pudo abrir la cámara en vivo. Pulsa «Activar cámara» para tomar una foto del QR.';
     } finally {
       starting = false;
-      if (!stream) start.disabled = false;
+      if (!stream) { start.disabled = false; liveStart.disabled = false; }
     }
   });
   stopButton.addEventListener('click', () => {
@@ -166,6 +236,7 @@
     }
     readingPhoto = true;
     start.disabled = true;
+    liveStart.disabled = true;
     const inputs = [document.getElementById('qr-photo'), document.getElementById('qr-camera')];
     inputs.forEach(input => { input.disabled = true; });
     const current = generation;
@@ -175,10 +246,23 @@
       const image = new Image();
       image.src = url;
       await image.decode();
-      const code = await decodePhoto(image, current);
+      let code = null;
+      let serverError = '';
+      let ambiguous = false;
+      if (advanced.checked) {
+        status.textContent = 'Leyendo foto con QReader en el servidor…';
+        try {
+          code = await decodeOnServer(image, image.naturalWidth, image.naturalHeight, current);
+        } catch (error) {
+          if (current !== generation) return;
+          serverError = error.name === 'AbortError' ? 'QReader tardó demasiado. Reintenta con una foto más cercana.' : error.message;
+          ambiguous = error.code === 'multiple_qr';
+        }
+      }
+      if (!code && !ambiguous && current === generation) code = await decodePhoto(image, current);
       if (current !== generation) return;
       if (code) openCode(code.data);
-      else status.textContent = 'No se encontró un QR. Acerca la cámara para que el código ocupe la mayor parte de la foto, enfoca y conserva su borde blanco. Evita reflejos e inclinación.';
+      else status.textContent = serverError || 'No se encontró un QR. Acerca la cámara para que el código ocupe la mayor parte de la foto, enfoca y conserva su borde blanco. Evita reflejos e inclinación.';
     } catch (_) {
       status.textContent = 'No se pudo leer la imagen. Prueba con JPG o PNG.';
     } finally {
@@ -186,11 +270,17 @@
       event.target.value = '';
       readingPhoto = false;
       start.disabled = false;
+      liveStart.disabled = false;
       inputs.forEach(input => { input.disabled = false; });
     }
   }
   document.getElementById('qr-photo').addEventListener('change', readPhoto);
   document.getElementById('qr-camera').addEventListener('change', readPhoto);
+  advanced.addEventListener('change', () => {
+    if (!advanced.checked && serverController) serverController.abort();
+    liveServerAvailable = true;
+    status.textContent = advanced.checked ? 'QReader activo: las imágenes se envían al servidor para leerlas.' : 'Lectura local activa: las imágenes no se envían al servidor.';
+  });
   window.addEventListener('pagehide', stop);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 })();

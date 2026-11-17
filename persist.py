@@ -5,6 +5,7 @@ impide dos notas oficiales para el mismo club/evento también entre procesos.
 """
 
 import json
+import mimetypes
 import os
 import sqlite3
 from dataclasses import asdict
@@ -15,6 +16,7 @@ import data
 from werkzeug.security import generate_password_hash
 
 DB_PATH = os.environ.get("SCOREUP_DB", os.path.join(os.path.dirname(__file__), "scoreup.db"))
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
 MODELS = {
     "clubs": data.Club, "users": data.Usuario, "eventos": data.Evento,
     "criterios": data.Criterio, "evento_club": data.EventoClub,
@@ -129,3 +131,29 @@ def load(connection=None):
     finally:
         if connection is None:
             conn.close()
+
+
+def _safe_name(nombre):
+    name = os.path.basename(str(nombre or ""))
+    if not name or name in {".", ".."}:
+        raise ValueError("Nombre de evidencia inválido.")
+    return name
+
+
+def save_evidence(nombre, contenido, connection=None):
+    """Guarda la foto en ``static/uploads``; ``connection`` se ignora en SQLite."""
+    name = _safe_name(nombre)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    with open(os.path.join(UPLOAD_DIR, name), "wb") as file:
+        file.write(bytes(contenido))
+    return name
+
+
+def read_evidence(nombre):
+    path = os.path.join(UPLOAD_DIR, _safe_name(nombre))
+    if not os.path.isfile(path):
+        return None
+    with open(path, "rb") as file:
+        contenido = file.read()
+    mime = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    return contenido, mime

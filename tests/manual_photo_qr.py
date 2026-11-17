@@ -60,6 +60,7 @@ def main():
                     page.goto(base + "/staff/escanear")
                     # Forzar fallback jsQR para que no dependa de BarcodeDetector.
                     page.evaluate("() => { delete window.BarcodeDetector; }")
+                    page.locator('#qreader-enabled').uncheck()
                     page.locator('#qr-camera').set_input_files(path)
                     try:
                         page.wait_for_url("**/qr/*", timeout=60000)

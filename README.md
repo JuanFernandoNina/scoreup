@@ -20,7 +20,11 @@ Para verla si tienes una sesión iniciada, cierra sesión o abre una ventana pri
 
 Cada club tiene una tarjeta QR descargable e imprimible. El staff escanea con la cámara normal del celular e inicia sesión si hace falta; vuelve automáticamente al club. La primera evaluación guardada por **club y evento** es la oficial. Solo su autor puede corregirla mientras el evento esté abierto; cada corrección genera una notificación revisable en **Reportes**.
 
-También puede entrar a **Staff → Escanear QR de un club**: cámara en vivo en HTTPS/localhost o lectura de una foto en la red local HTTP. El lector usa jsQR 1.4.0 incluido localmente; las imágenes no se suben. La cámara en vivo por HTTP usando la IP del PC está bloqueada por los navegadores: utiliza una foto o la cámara normal del celular.
+También puede entrar a **Staff → Escanear QR de un club**: **Activar cámara** abre directamente la captura de una foto, también en HTTP local. Confirmar la fotografía inicia la lectura. El navegador del teléfono decide si abre la cámara directamente o muestra su selector de captura. La tarjeta de importación muestra únicamente **Elegir imagen del QR** para PNG o galería, sin duplicar la captura. **Escaneo en vivo** queda como alternativa visible solo en HTTPS/localhost compatibles. **QReader** procesa fotos y fotogramas difíciles en el servidor de ScoreUp. La opción «Usar lectura avanzada QReader» está visible y activada inicialmente: envía la imagen reducida al servidor, sin guardarla en el historial. Desmarcarla conserva lectura exclusivamente local con jsQR.
+
+Instalación de QReader en el entorno Python: `.venv\Scripts\python.exe -m pip install -r requirements-qr.txt`. Es recomendable instalar antes PyTorch/torchvision CPU desde su índice oficial, como hace el Dockerfile. QReader usa un modelo de detección que se descarga la primera vez; en Docker queda preparado durante la construcción. En Linux requiere libzbar0 y las bibliotecas de OpenCV, incluidas en el Dockerfile.
+
+En Windows, si pyzbar informa que no puede cargar `libzbar-64.dll` o alguna dependencia, instalar el [runtime Visual C++ 2013 x64 de Microsoft](https://www.microsoft.com/en-us/download/details.aspx?id=40784). No descargar DLL de sitios desconocidos. Para preparar el modelo antes de trabajar sin internet: `.venv\Scripts\python.exe -c "from qr_reader import get_reader; get_reader()"`.
 
 El lector de fotos prueba varias resoluciones/recortes y recupera contraste; usa además BarcodeDetector cuando el navegador lo ofrece. Los QR nuevos contienen un identificador firmado más corto, con mayor margen blanco y tarjeta ampliada; las tarjetas anteriores siguen siendo válidas. Descarga nuevamente para obtener la versión menos densa. Ningún lector puede recuperar una foto muy desenfocada, con reflejos sobre el código o partes fuera del encuadre.
 
@@ -68,6 +72,8 @@ El administrador gestiona la organización completa: crea clubes, eventos, crite
 
 El dashboard tiene diseño claro azul/naranja como la landing, menú lateral adaptable, buscador de clubes/eventos con `Ctrl+K`, indicadores reales, progreso de evaluación por evento y ranking de temporada con posiciones compartidas. Las evaluaciones pendientes cuentan solo inscripciones de eventos abiertos sin nota oficial; el ranking indica cuándo incluye eventos abiertos. No se muestran variaciones históricas inventadas. El acceso **Crear evento** abre directamente el formulario existente.
 
+**Proyección limpia:** en Proyectar resultados, seleccionar el ranking y pulsar **Mostrar ranking → Proyectar a pantalla completa**. Muestra primero el podio de 1.º, 2.º y 3.º lugar; debajo aparecen los demás puestos en orden. Solo hay club, puesto real y puntaje, sin sidebar ni formularios. Usa Fullscreen cuando el navegador lo permite; **Esc** permite volver. Si no admite esa API o JavaScript está deshabilitado, abre la vista limpia independiente: volver con Atrás y usar F11 en computadora si se desea. La ruta `?pantalla=1` sirve esa vista. No cambia cálculos ni publica un enlace sin autenticación, y no incorpora actualización automática de resultados.
+
 Prueba opcional en Edge con base temporal: `.venv\Scripts\python.exe tests/manual_admin_dashboard.py`; comprueba PC/móvil, búsqueda, menú, creación y selector de temporada. Todas las páginas que usan el layout admin cargan CSS y JavaScript locales, sin Tailwind CDN.
 
 ### Pantallas de gestión
@@ -103,6 +109,8 @@ Prueba visual opcional con Edge y SQLite temporal: `.venv\Scripts\python.exe tes
 </p>
 
 El director consulta el puntaje de temporada, su posición, penalizaciones y resultados de su propio club en eventos cerrados. Su acceso es de solo lectura, con selector de temporada y navegación adaptada al celular.
+
+Su dashboard también muestra **el QR de su propio club** y permite descargarlo en PNG para presentarlo al staff. Usa la misma firma y formato que la tarjeta de administración; no permite escoger clubes ajenos ni otorga permisos para evaluar. La imagen utiliza la dirección pública configurada o la dirección desde la que se abre el servidor.
 
 ### Regenerar las capturas
 
@@ -145,7 +153,7 @@ Prueba opcional de tema/scroll en Edge y SQLite temporal: `.venv\Scripts\python.
 | **Lenguaje** | Python 3.10+ |
 | **Framework web** | Flask + Jinja2 |
 | **Estilos** | CSS local y Tailwind compilado para Admin; CDN solo en pantallas heredadas |
-| **Base de datos** | SQLite (persistencia vía repositorio propio) |
+| **Base de datos** | SQLite local/Docker; PostgreSQL (Supabase) en Vercel |
 | **Excel** | openpyxl (importación/exportación) |
 | **PDF** | ReportLab |
 | **Seguridad** | Werkzeug (hash de contraseñas) |
@@ -154,7 +162,7 @@ Prueba opcional de tema/scroll en Edge y SQLite temporal: `.venv\Scripts\python.
 
 ## Architecture
 
-Aplicación monolítica modular con separación inicial entre interfaz, cálculos, entidades y persistencia. `persist.py` es un adaptador de almacenamiento; Factory y una separación completa en servicios son propuestas de refactorización, no patrones ya implementados:
+Aplicación monolítica modular con separación entre interfaz, cálculos, entidades y persistencia. `store.py` elige el adaptador (`persist.py` para SQLite local/Docker o `pg_store.py` para PostgreSQL en Vercel); Factory y una separación completa en servicios son propuestas de refactorización, no patrones ya implementados:
 
 ```
     Admin · Staff · Director
@@ -169,12 +177,12 @@ Aplicación monolítica modular con separación inicial entre interfaz, cálculo
         │  Dominio   │  data.py (entidades) + calc.py (lógica de negocio)
         └─────┬──────┘
         ┌─────▼──────┐
-        │ Acceso a   │  persist.py (repositorio)
+        │ Acceso a   │  store.py → persist.py / pg_store.py
         │  datos     │
         └─────┬──────┘
               ▼
         ┌───────────┐
-        │  SQLite   │  scoreup.db
+        │  SQLite / PostgreSQL   │  scoreup.db / Supabase
         └───────────┘
 ```
 
@@ -183,7 +191,10 @@ Aplicación monolítica modular con separación inicial entre interfaz, cálculo
 | `app.py` | Rutas HTTP, autenticación, control de acceso por rol y casos de uso |
 | `data.py` | Entidades de dominio (`dataclasses`): Club, Usuario, Evento, Evaluación… |
 | `calc.py` | Reglas de negocio: porcentaje ponderado, puntaje, rankings y desempates |
-| `persist.py` | Adaptador SQLite: migraciones, recarga transaccional y restricción de evaluación única |
+| `persist.py` | Adaptador SQLite: migraciones, recarga transaccional, evidencias locales y restricción de evaluación única |
+| `store.py` | Selección de backend y transacciones comunes |
+| `pg_store.py` | Adaptador PostgreSQL/Supabase: esquema, lock distribuido y evidencias `BYTEA` |
+| `qr_reader.py` | QReader local/Docker y fallback OpenCV para Vercel |
 | `templates/` | Vistas web con Jinja2 + Tailwind |
 | `static/` | CSS, JavaScript, lector QR local y evidencias privadas excluidas de Git |
 
@@ -196,7 +207,15 @@ scoreup/
 ├── app.py               # Aplicación Flask y rutas
 ├── calc.py              # Cálculos y rankings
 ├── data.py              # Entidades de dominio (dataclasses)
-├── persist.py           # Persistencia SQLite
+├── persist.py           # Persistencia SQLite local/Docker
+├── store.py             # Selección de backend y transacciones
+├── pg_store.py          # Persistencia PostgreSQL/Supabase
+├── qr_reader.py         # QReader local + fallback OpenCV
+├── pyproject.toml       # Dependencias y entrypoint para Vercel
+├── vercel.json          # Configuración de la función Flask
+├── scripts/
+│   ├── migrate_supabase.py # Migración SQLite → PostgreSQL
+│   └── build_vercel.py     # Copia estáticos a public/
 ├── requirements.txt     # Dependencias de la aplicación
 ├── requirements-dev.txt # Herramientas opcionales de pruebas visuales/capturas
 ├── README.md            # Este documento
@@ -210,6 +229,54 @@ scoreup/
 ```
 
 ---
+
+## Ejecutar con Docker
+
+Con Docker Desktop iniciado, desde la raíz: `docker compose up -d --build`.
+Abrir **http://localhost:5001** y crear una cuenta de administrador para la instalación nueva y vacía. No importa ni modifica la base local existente. SQLite, clave QR y fotos persisten en un volumen; no eliminarlo con `down -v`.
+
+Configuración de red/QR, operación y respaldos: [documents/DOCKER.md](documents/DOCKER.md).
+
+---
+
+## Despliegue en Vercel + Supabase
+
+Vercel ejecuta la app Flask como una función y Supabase PostgreSQL conserva los datos. La instalación local (`:5000`) y Docker (`:5001`) siguen usando SQLite y no se modifican al desplegar.
+
+### Variables de entorno en Vercel
+
+Configúralas en **Project Settings → Environment Variables** para Production y, si aplica, Preview. No las escribas en el repositorio.
+
+| Variable | Valor |
+|---|---|
+| `SCOREUP_DB_BACKEND` | `postgres` |
+| `DATABASE_URL` o `SCOREUP_DB_URL` | Cadena **transaction pooler** de Supabase, con `sslmode=require` |
+| `SECRET_KEY` | Clave larga y aleatoria; obligatoria en cloud |
+| `PUBLIC_BASE_URL` | URL HTTPS pública del proyecto, sin barra final |
+
+`DATABASE_URL` tiene prioridad sobre `SCOREUP_DB_URL`. El código fuerza TLS (`sslmode=require`) y desactiva prepared statements para el pooler de Supabase. `PUBLIC_BASE_URL` puede derivarse de `VERCEL_URL`, pero conviene fijarla cuando se use dominio propio.
+
+### Base de datos y fotos
+
+El esquema se crea automáticamente en el primer arranque. Las fotos de incidentes se guardan en la tabla `evidencias` como `BYTEA` y se sirven por `/evidencias/<nombre>`; no se usa Supabase Storage ni una service-role key. Las escrituras se serializan con un advisory lock de transacción para conservar la regla de nota oficial única entre instancias.
+
+### Migración de datos autorizados
+
+Desde una máquina con acceso a la base Supabase y al entorno local:
+
+```powershell
+$env:DATABASE_URL = "postgresql://...pooler.supabase.com:6543/postgres?sslmode=require"
+.\.venv\Scripts\python.exe scripts\migrate_supabase.py
+.\.venv\Scripts\python.exe scripts\migrate_supabase.py --apply
+```
+
+El primer comando es un simulacro. `--apply` copia las tablas SQLite y los archivos de `static/uploads`. Si la base destino ya tiene datos,usa `--replace` solo cuando se quiera reemplazarlos. La cadena de conexión no se imprime ni se guarda.
+
+### QR en la nube
+
+Vercel instala dependencias desde `pyproject.toml`: no incluye `qreader`, `torch` ni `opencv-python`. El fallback `opencv-python-headless` se usa automáticamente al no estar QReader. El build copia `static/**` a `public/static/**` (excepto `uploads`) porque Vercel sirve los estáticos desde `public/`. Para forzar un backend: `SCOREUP_QR_BACKEND=qreader|opencv|auto` (por defecto `auto`).
+
+> Las fotos nuevas deben comprimirse: Vercel Functions limita el cuerpo de la petición por debajo del límite de 10 MB de la app local. La cámara en vivo exige HTTPS y no depende de QReader.
 
 ## Getting Started
 
@@ -250,11 +317,14 @@ Abre **http://127.0.0.1:5000** en tu navegador. Para probar el QR desde el celul
 
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
-| `SECRET_KEY` / `FLASK_SECRET` | Clave de sesión y firma de QR (SECRET_KEY tiene prioridad) | Aleatoria, persistida en `.secret_key`, fuera de Git |
+| `SECRET_KEY` / `FLASK_SECRET` | Clave de sesión y firma de QR (SECRET_KEY tiene prioridad) | Aleatoria, persistida en `.secret_key`, fuera de Git; obligatoria en cloud |
 | `PORT` | Puerto del servidor | `5000` |
 | `HOST` | Interfaz de escucha | `0.0.0.0` |
-| `PUBLIC_BASE_URL` | Dirección accesible desde el teléfono, sin barra final | Dirección usada para abrir el panel |
+| `PUBLIC_BASE_URL` | Dirección HTTPS pública, sin barra final | Dirección usada para abrir el panel |
 | `SCOREUP_DB` | Archivo SQLite (útil para pruebas aisladas) | `scoreup.db` |
+| `SCOREUP_DB_BACKEND` | `postgres` activa PostgreSQL en Vercel | SQLite |
+| `DATABASE_URL` / `SCOREUP_DB_URL` | Cadena del pooler de Supabase | Sin valor |
+| `SCOREUP_QR_BACKEND` | `auto`, `qreader` u `opencv` | `auto` |
 
 ### Reglas de negocio
 

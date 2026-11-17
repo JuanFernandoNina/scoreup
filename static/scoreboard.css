@@ -1,0 +1,19 @@
+/* Vista de proyector: exclusivamente puesto, club y puntaje. */
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#071b36;color:#fff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;overflow-x:hidden}
+body{background:radial-gradient(ellipse at 80% 0,#174a81 0,transparent 60%),#071b36}
+.scoreboard{width:100%;min-height:100vh;min-height:100dvh;padding:clamp(12px,2.5vw,48px);display:flex;flex-direction:column;gap:clamp(8px,1.6vh,24px);font-size:clamp(16px,var(--score-size),56px)}
+.scoreboard-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1.4vw,22px);flex-shrink:0}
+.scoreboard-podium .scoreboard-row{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;gap:clamp(4px,.7vh,10px) clamp(8px,1.2vw,20px);justify-items:center;text-align:center;align-content:center;padding:clamp(10px,1.6vh,26px) clamp(10px,1.5vw,26px)}
+.scoreboard-podium .scoreboard-position{grid-column:1/-1;min-width:0;font-size:1.15em;color:#ffd2a1}
+.scoreboard-podium .scoreboard-club{font-size:.72em}
+.scoreboard-podium .scoreboard-points{font-size:.82em}
+.scoreboard-rest{display:grid;grid-auto-flow:column;grid-template-columns:repeat(var(--columns),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr));gap:clamp(6px,1.1vh,16px);flex:1;min-height:0}
+.scoreboard-row{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:clamp(10px,1.8vw,32px);padding:clamp(8px,1.2vh,24px) clamp(12px,1.7vw,32px);border:1px solid #ffffff20;border-radius:14px;background:#ffffff08}
+.scoreboard-position{font-weight:850;color:#8bbaf1;font-variant-numeric:tabular-nums;min-width:1.8em}.scoreboard-position small{font-size:.6em}
+.scoreboard-club{font-size:.7em;font-weight:650;line-height:1.18;overflow-wrap:anywhere}
+.scoreboard-points{color:#fff;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.95em}.scoreboard-points small{display:block;text-align:right;font-size:.26em;font-weight:500;color:#b2c6df;letter-spacing:1px}
+.scoreboard-row.is-top{border-color:#ffb86a70;background:linear-gradient(100deg,#e58a251c,#ffffff09)}.is-top .scoreboard-position,.is-top .scoreboard-points{color:#ffbf7b}
+.scoreboard-empty{grid-column:1/-1;align-self:center;text-align:center;color:#d5e6ff;font-size:clamp(22px,4vw,54px)}
+@media(max-width:650px){.scoreboard{font-size:clamp(20px,6vw,34px)}.scoreboard-podium{grid-template-columns:minmax(0,1fr);gap:8px}.scoreboard-podium .scoreboard-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto;justify-items:start;text-align:left;padding:12px}.scoreboard-podium .scoreboard-position{grid-column:auto;min-width:1.5em}.scoreboard-rest{grid-auto-flow:row;grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:minmax(60px,1fr)}.scoreboard-club{font-size:.68em}.scoreboard-row{gap:10px;padding:12px}.scoreboard-position{min-width:1.5em}}
+@media print{body{background:white;color:#142d4b}.scoreboard{min-height:0;font-size:24px}.scoreboard-row{break-inside:avoid;background:white!important;border-color:#ccc}.scoreboard-points,.scoreboard-position,.is-top .scoreboard-points,.is-top .scoreboard-position{color:#142d4b}}

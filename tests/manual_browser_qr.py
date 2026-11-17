@@ -93,9 +93,23 @@ def main():
                 page.set_viewport_size({"width": 390, "height": 844})
                 assert page.locator('#qr-photo').get_attribute('capture') is None
                 assert page.locator('#qr-camera').get_attribute('capture') == 'environment'
-                page.locator("#qr-photo").set_input_files(qr_file)
+                # Forzar QReader real: la lectura local no puede rescatar este caso.
+                page.evaluate('window.jsQR = () => null; delete window.BarcodeDetector;')
+                # Simular HTTP local sin getUserMedia: el botón principal debe
+                # abrir igualmente el selector de captura, dentro del clic.
+                page.evaluate("Object.defineProperty(window, 'isSecureContext', {value: false, configurable: true})")
+                with page.expect_response(lambda response: response.url.endswith('/staff/escanear/imagen'), timeout=60000) as decoded:
+                    with page.expect_file_chooser() as capture:
+                        page.get_by_role('button', name='Activar cámara', exact=True).click()
+                    assert capture.value.element.get_attribute('id') == 'qr-camera'
+                    assert capture.value.element.get_attribute('capture') == 'environment'
+                    capture.value.set_files(qr_file)
+                assert decoded.value.status == 200, decoded.value.text()
+                # La navegación inmediata puede liberar el cuerpo de la respuesta
+                # en Edge; basta el 200 JSON con ambos lectores locales anulados.
+                assert decoded.value.headers['content-type'].startswith('application/json')
                 try:
-                    page.wait_for_url("**/staff?club=club-1", timeout=10000)
+                    page.wait_for_url("**/staff?club=club-1", timeout=60000)
                 except Exception:
                     print("Scanner:", page.locator('#scan-status').inner_text(), "JS errors:", errors)
                     raise
@@ -135,13 +149,14 @@ def main():
                 # Cámara real denegada: debe ofrecer la alternativa de foto.
                 page.goto(base + "/staff/escanear")
                 page.evaluate("() => { navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; }")
-                page.get_by_role("button", name="Activar cámara").click()
+                page.get_by_role("button", name="Escaneo en vivo", exact=True).click()
                 page.get_by_role("status").filter(has_text="No se pudo abrir la cámara").wait_for()
                 assert page.get_by_role("button", name="Activar cámara").is_enabled()
                 # Flujo de vídeo con una cámara simulada que muestra el QR descargado.
                 import base64
                 image_url = "data:image/png;base64," + base64.b64encode(qr_file.read_bytes()).decode()
                 page.evaluate("""async source => {
+                    window.jsQR = () => null;
                     const image = new Image(); image.src = source; await image.decode();
                     const canvas = document.createElement('canvas');
                     canvas.width = image.width; canvas.height = image.height;
@@ -149,11 +164,11 @@ def main():
                     window.testCamera = canvas.captureStream(10);
                     navigator.mediaDevices.getUserMedia = async () => window.testCamera;
                 }""", image_url)
-                page.get_by_role("button", name="Activar cámara").click()
-                page.wait_for_url("**/staff?club=club-1")
+                page.get_by_role("button", name="Escaneo en vivo", exact=True).click()
+                page.wait_for_url("**/staff?club=club-1", timeout=60000)
                 assert not errors, errors
                 browser.close()
-                print("OK: Edge móvil, descarga PNG, lectura local sin internet, evaluación persistida, imágenes inválidas, IP antigua, cámara denegada y vídeo con cámara simulada.")
+                print("OK: Activar cámara abre captura nativa incluso sin contexto seguro; QReader real por foto/fotograma, evaluación, errores, IP antigua y vídeo simulado; pendiente teléfono físico.")
         finally:
             server.shutdown()
             thread.join()

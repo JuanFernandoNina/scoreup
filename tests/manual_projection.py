@@ -56,6 +56,27 @@ def main():
                     assert page.locator('.admin-nav-link.is-active span').inner_text() == 'Resultados'
                     if output:
                         page.screenshot(path=str(output / f'projection-{width}.png'), full_page=True)
+                    page.locator('#launch-projection').click()
+                    page.locator('.projection-overlay iframe').wait_for()
+                    screen = page.frame_locator('.projection-overlay iframe')
+                    screen.locator('.scoreboard-row').first.wait_for()
+                    assert screen.locator('.scoreboard-row').count() > 3
+                    assert screen.locator('.scoreboard-podium .scoreboard-row').count() == 3
+                    assert screen.locator('.scoreboard-rest .scoreboard-row').count() > 0
+                    podium_names = screen.locator('.scoreboard-podium .scoreboard-club').all_text_contents()
+                    rest_names = screen.locator('.scoreboard-rest .scoreboard-club').all_text_contents()
+                    assert len(set(podium_names)) == 3
+                    assert not set(podium_names).intersection(rest_names)
+                    assert screen.locator('nav, form, button, select, .admin-sidebar').count() == 0
+                    assert screen.locator('body').evaluate('(body) => body.scrollWidth <= innerWidth'), width
+                    if output:
+                        page.screenshot(path=str(output / f'fullscreen-{width}.png'), full_page=True)
+                    if page.evaluate('!!document.fullscreenElement'):
+                        page.evaluate('document.exitFullscreen()')
+                    else:
+                        page.locator('.projection-exit').focus()
+                        page.locator('.projection-exit').click()
+                    page.locator('.projection-overlay').wait_for(state='detached')
                 page.locator('#projection-scope').select_option('evento')
                 page.locator('#projection-event').select_option('ev-1')
                 page.get_by_role('button', name='Mostrar ranking').click()
@@ -77,10 +98,15 @@ def main():
                 nojs.locator('#projection-event').select_option('ev-1')
                 nojs.get_by_role('button', name='Mostrar ranking').click()
                 assert nojs.locator('#projection-title').inner_text() == 'Resultados del evento'
+                nojs.locator('#launch-projection').click()
+                assert nojs.locator('.scoreboard-row').count() == 5
+                assert nojs.locator('.scoreboard-podium .scoreboard-row').count() == 3
+                assert nojs.locator('.scoreboard-rest .scoreboard-row').count() == 2
+                assert nojs.locator('nav, form, button, select').count() == 0
                 assert not errors, errors
                 assert not external, external
                 browser.close()
-                print('OK: proyección Edge 1440/390/320px, podio, ranking completo, filtros, evento vacío, sin selección y sin JavaScript; recursos locales y sin errores JS.')
+                print('OK: proyección Edge 1440/390/320px, pantalla completa limpia y salida, podio, ranking, filtros, vacíos y sin JavaScript; recursos locales y sin errores JS.')
         finally:
             server.shutdown()
             thread.join()

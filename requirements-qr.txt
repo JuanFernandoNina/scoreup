@@ -1,0 +1,3 @@
+# Lectura avanzada de fotos en el servidor; usa PyTorch CPU en Docker.
+-r requirements.txt
+qreader==3.16

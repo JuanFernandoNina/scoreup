@@ -14,6 +14,7 @@
 .scanner-camera-actions button{cursor:pointer;min-height:46px}.scanner-camera-actions button:disabled{opacity:.6;cursor:wait}
 .scanner-status{border:1px solid #dde8fc;border-left:3px solid #4c7ce0;border-radius:12px;background:#f0f5ff;padding:14px 16px;color:#355e9b;font-size:13px;overflow-wrap:anywhere}
 .scanner-help{font-size:12px;color:#72849c;line-height:1.8;margin-top:14px!important}
+.scanner-import label.scanner-help{display:flex;align-items:center;gap:10px;min-height:44px;color:#345b93;font-weight:650;cursor:pointer}.scanner-import #qreader-enabled{width:20px;height:20px;accent-color:#245ee0;flex-shrink:0}
 .scanner-upload{margin-top:20px;padding:18px;border:1px solid #e1eafa;border-radius:14px;background:#f8faff}
 .scanner-upload label{display:block;font-weight:650;color:#24466f;font-size:14px;margin-bottom:12px}
 .scanner-upload small{display:block;font-size:11px;color:#788ca6;font-weight:400;margin-top:5px}

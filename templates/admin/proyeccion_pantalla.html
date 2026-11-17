@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScoreUp · Puntajes y lugares</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='scoreboard.css') }}">
+</head>
+<body>
+  {% set mostrar = scope != 'evento' or evento %}
+  {% set total = filas|length if mostrar else 0 %}
+  {% set podio = filas[:3] if mostrar else [] %}
+  {% set resto = filas[3:] if mostrar else [] %}
+  {% set rows = [resto|length, 10]|min if resto else 1 %}
+  {% set columns = ((resto|length + 9) // 10) if resto else 1 %}
+  <main class="scoreboard" aria-label="Lugares y puntajes de los clubes" style="--rows:{{ rows }};--columns:{{ columns }};--score-size:{{ 42 / (rows + 1) }}vh">
+    {% if total %}
+      {% if podio %}
+      <section class="scoreboard-podium" aria-label="Primeros tres lugares">
+        {% for fila in podio %}
+        <article class="scoreboard-row is-top" aria-label="{{ fila.posicion }}. {{ fila.club.nombre }}, {{ fmt_pts(fila.puntaje) }} puntos">
+          <span class="scoreboard-position">{{ fila.posicion }}<small>°</small></span>
+          <strong class="scoreboard-club">{{ fila.club.nombre }}</strong>
+          <span class="scoreboard-points">{{ fmt_pts(fila.puntaje) }}<small>pts</small></span>
+        </article>
+        {% endfor %}
+      </section>
+      {% endif %}
+      {% if resto %}
+      <section class="scoreboard-rest" aria-label="Demás puestos">
+        {% for fila in resto %}
+        <article class="scoreboard-row" aria-label="{{ fila.posicion }}. {{ fila.club.nombre }}, {{ fmt_pts(fila.puntaje) }} puntos">
+          <span class="scoreboard-position">{{ fila.posicion }}<small>°</small></span>
+          <strong class="scoreboard-club">{{ fila.club.nombre }}</strong>
+          <span class="scoreboard-points">{{ fmt_pts(fila.puntaje) }}<small>pts</small></span>
+        </article>
+        {% endfor %}
+      </section>
+      {% endif %}
+    {% else %}
+      <p class="scoreboard-empty">{{ 'Selecciona un evento' if not mostrar else 'Todavía no hay resultados' }}</p>
+    {% endif %}
+  </main>
+</body>
+</html>

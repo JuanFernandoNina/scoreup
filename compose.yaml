@@ -1,0 +1,38 @@
+name: scoreup-docker
+
+services:
+  web:
+    build: .
+    image: scoreup:local
+    init: true
+    ports:
+      - "${SCOREUP_BIND_IP:-0.0.0.0}:${SCOREUP_PORT:-5001}:5000"
+    environment:
+      SCOREUP_DB: /data/scoreup.db
+      SCOREUP_DATA_DIR: /data
+      PUBLIC_BASE_URL: "${SCOREUP_PUBLIC_BASE_URL:-}"
+    volumes:
+      - scoreup-data:/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/login', timeout=5).close()"]
+      interval: 15s
+      timeout: 6s
+      start_period: 20s
+      retries: 3
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  scoreup-data:

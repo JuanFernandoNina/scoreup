@@ -1,4 +1,6 @@
 /* Proyección integrada en el dashboard azul/naranja. Sin dependencias externas. */
+body.is-projecting{display:block!important;margin:0!important;padding:0!important;height:100vh;min-height:0;overflow:hidden}body.is-projecting>:not(.projection-overlay){display:none!important}
+.projection-launch{margin-top:18px}.projection-overlay,.projection-overlay:fullscreen{position:fixed;inset:0;z-index:10000;background:#071b36;width:100%;height:100%;padding:0}.projection-overlay iframe{display:block;width:100%;height:100%;border:0;background:#071b36}.projection-exit{position:absolute;top:8px;right:8px;border:1px solid #ffffff55;border-radius:8px;background:#071b36e8;color:white;padding:10px 14px;opacity:0;cursor:pointer}.projection-exit:hover,.projection-exit:focus-visible{opacity:1}.projection-overlay::backdrop{background:#071b36}
 .projection-hero{display:flex;align-items:center;justify-content:space-between;gap:24px}
 .projection-hero h1{margin:6px 0 10px}.projection-hero p{color:#e3edff;line-height:1.8}
 .admin-management .projection-hero p{color:#e3edff}

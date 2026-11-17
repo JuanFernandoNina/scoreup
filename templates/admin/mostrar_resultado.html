@@ -23,6 +23,8 @@
       <label for="projection-event">Evento<select id="projection-event" name="evento_id"><option value="">Selecciona un evento…</option>{% for e in db.eventos %}<option value="{{ e.id }}" {% if evento and evento.id == e.id %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}</select></label>
       <button type="submit" class="admin-button">Mostrar ranking {{ icon('arrow') }}</button>
     </form>
+    <a id="launch-projection" class="admin-button projection-launch" href="{{ url_for('admin_mostrar_resultado', pantalla=1, scope=scope, evento_id=evento.id if evento else '', temporada=temporada) }}">Proyectar a pantalla completa</a>
+    <p class="projection-note">Primero selecciona el ranking y pulsa «Mostrar ranking». Al proyectar solo se muestran clubes, lugares y puntajes. Pulsa Esc para volver.</p>
   </section>
   <section class="admin-panel projection-stage" aria-labelledby="projection-title">
     <div class="projection-heading"><span class="projection-eyebrow">{{ db.organizacion.nombre }}</span><h2 id="projection-title">{{ 'Resultados del evento' if scope == 'evento' else 'Ranking de temporada' }}</h2><p>{{ evento.nombre if scope == 'evento' and evento else ('Selecciona un evento para comenzar.' if scope == 'evento' else 'Temporada ' ~ temporada) }}</p>{% if scope == 'evento' and evento %}<span class="projection-status {{ 'is-published' if evento.cerrado else '' }}">{{ 'Evento cerrado · resultados publicados' if evento.cerrado else 'Evento abierto · resultados provisionales' }}</span>{% elif scope != 'evento' %}<span class="projection-status">Vista de administrador · incluye eventos abiertos</span>{% endif %}</div>
@@ -37,4 +39,5 @@
   </section>
   {% if mostrar and filas %}<section class="admin-panel projection-classification" aria-labelledby="classification-title"><div class="projection-list-heading"><div><span class="projection-eyebrow">TODOS LOS PARTICIPANTES</span><h2 id="classification-title">Clasificación completa</h2></div><span class="projection-status">{{ filas|length }} clubes</span></div><ol class="projection-list">{% for fila in filas %}<li><span class="projection-rank {{ 'is-top' if fila.posicion <= 3 else '' }}">{{ fila.posicion }}°</span><strong>{{ fila.club.nombre }}</strong><span class="projection-list-points">{{ fmt_pts(fila.puntaje) }} <small>pts</small></span></li>{% endfor %}</ol></section>{% endif %}
 </div>
+<script src="{{ url_for('static', filename='projection.js') }}"></script>
 {% endblock %}

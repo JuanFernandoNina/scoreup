@@ -40,6 +40,14 @@ def main():
                             assert page.locator('.staff-action').count()==4
                             assert '36, 92, 238' in page.locator('.staff-hero').evaluate('el => getComputedStyle(el).backgroundImage') or 'linear-gradient' in page.locator('.staff-hero').evaluate('el => getComputedStyle(el).backgroundImage')
                         if role=='director':
+                            qr=page.locator('.director-qr-image img')
+                            assert qr.is_visible()
+                            assert qr.evaluate('(image)=>image.complete && image.naturalWidth > 0')
+                            assert qr.get_attribute('src')=='/director/qr.png'
+                            assert page.locator('#qr-de-mi-club').inner_text().count('Tigres del Valle')==1
+                            with page.expect_download() as download:
+                                page.get_by_role('link',name='Descargar QR en PNG',exact=True).click()
+                            assert download.value.suggested_filename=='scoreup-club-1-qr.png'
                             assert page.locator('.director-stat').count()==4
                             assert not page.locator('form[method=post]').count()
                             assert 'Campamento Regional' not in page.locator('.director-table').inner_text()
