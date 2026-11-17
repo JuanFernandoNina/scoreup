@@ -47,3 +47,6 @@ static/uploads/*.webp
 
 # Respaldos privados de instalaciones Docker
 /respaldos/
+
+# Paquetes descargados para instalar sin conexión (específicos de cada equipo).
+/paquetes-offline/

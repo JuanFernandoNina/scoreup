@@ -8,6 +8,8 @@
 !calc.py
 !data.py
 !persist.py
+!store.py
+!pg_store.py
 !qr_reader.py
 !templates/
 !templates/**

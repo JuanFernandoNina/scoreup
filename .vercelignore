@@ -29,3 +29,5 @@ Dockerfile
 compose.yaml
 requirements-qr.txt
 requirements-docker.txt
+requirements-local.txt
+paquetes-offline/

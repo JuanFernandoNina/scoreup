@@ -20,7 +20,7 @@ RUN apt-get update \
     && mkdir -p /data/uploads \
     && chown -R scoreup:scoreup /data
 
-COPY app.py calc.py data.py persist.py qr_reader.py ./
+COPY app.py calc.py data.py persist.py store.py pg_store.py qr_reader.py ./
 RUN python -c "from qr_reader import get_reader; get_reader()"
 COPY templates/ ./templates/
 COPY static/ ./static/

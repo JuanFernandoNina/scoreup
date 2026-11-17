@@ -1,0 +1,3 @@
+# Instalación local con SQLite y lector QR sin descargar modelos al ejecutarse.
+-r requirements.txt
+opencv-python-headless>=4.10,<5.0
