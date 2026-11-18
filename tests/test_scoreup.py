@@ -23,6 +23,21 @@ from PIL import Image
 
 
 class ScoreUpTests(unittest.TestCase):
+    def test_anonymous_public_pages_and_static_assets_do_not_connect_database(self):
+        with patch.object(web.store, "connect", side_effect=AssertionError("Unexpected DB access")):
+            for path in ["/", "/login", "/registro", "/static/app-utilities.css"]:
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200, path)
+                response.close()
+
+    def test_login_is_read_only_and_does_not_save_all_data(self):
+        token = self.token()
+        with patch.object(web.store, "begin", wraps=web.store.begin) as begin, patch.object(web.store, "save") as save:
+            response = self.client.post("/login", data={"username": "admin", "password": "admin", "csrf_token": token})
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(begin.call_args.kwargs["write"])
+        save.assert_not_called()
+
     def test_shared_demo_preparation_and_preserved_results(self):
         from scripts.preparar_demo import preparar, SOURCE
         from werkzeug.security import check_password_hash

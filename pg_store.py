@@ -136,7 +136,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS participante_unico
 
 
 def _dsn():
-    raw = os.environ.get("SCOREUP_DB_URL") or os.environ.get("DATABASE_URL")
+    raw = os.environ.get("DATABASE_URL") or os.environ.get("SCOREUP_DB_URL")
     if not raw:
         raise RuntimeError("Falta DATABASE_URL para usar el backend PostgreSQL.")
     parts = urlsplit(raw)
@@ -171,7 +171,6 @@ def begin(connection, write=False):
         connection.execute("SELECT pg_advisory_xact_lock(%s)", (LOCK_KEY,))
     else:
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
-        connection.execute("SELECT 1")
 
 
 def _hash_pw(password):
@@ -192,9 +191,8 @@ def initialize(connection=None):
     own = connection is None
     conn = connection or connect()
     try:
-        for statement in SCHEMA.split(";"):
-            if statement.strip():
-                conn.execute(statement)
+        # Sin parámetros/preparación: libpq envía el DDL completo en un viaje.
+        conn.execute(SCHEMA, prepare=False)
         if own:
             conn.commit()
             _initialized = True
@@ -219,16 +217,55 @@ def _decode_json(value):
     return value
 
 
+class _Snapshot(dict):
+    """Estado de la transacción con una copia serializada, no compartida ni cacheada.
+
+    La línea de base no cambia al guardar: el llamador aún puede hacer rollback.
+    No se añade a las claves del diccionario que reciben rutas y plantillas.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.original_rows = {}
+
+
+def _row(table, item, hash_password=True):
+    row = dict(item) if isinstance(item, dict) else asdict(item)
+    if table == "users" and hash_password:
+        row["password"] = _hash_pw(row["password"])
+    for key in JSON_FIELDS:
+        if key in row:
+            row[key] = json.dumps(_decode_json(row[key]), ensure_ascii=False,
+                                  sort_keys=True, separators=(",", ":"))
+    for key in BOOL_FIELDS:
+        if key in row:
+            row[key] = bool(row[key])
+    return row
+
+
+def _read_state(connection):
+    # Un único snapshot SQL, en lugar de once SELECT con once viajes de red.
+    # TABLES es una constante interna, nunca nombres recibidos del usuario.
+    fields = ", ".join(
+        f"'{table}', (SELECT COALESCE(json_agg(r), '[]'::json) FROM {table} r)"
+        for table in TABLES
+    )
+    return connection.execute(f"SELECT json_build_object({fields}) AS state").fetchone()["state"]
+
+
 def load(connection=None):
     own = connection is None
     ensure_initialized()
     conn = connection or connect()
     try:
-        db = {}
+        db = _Snapshot()
+        state = _read_state(conn)
         for table in TABLES:
             items = []
-            for record in conn.execute(f"SELECT * FROM {table}"):
+            db.original_rows[table] = {}
+            for record in state[table]:
                 row = dict(record)
+                db.original_rows[table][row["id"]] = _row(table, row, hash_password=False)
                 for key in JSON_FIELDS:
                     if key in row:
                         row[key] = _decode_json(row[key])
@@ -252,24 +289,55 @@ def save(db, connection=None):
         ensure_initialized()
     conn = connection or connect()
     try:
+        if own:
+            begin(conn, write=True)
+        if isinstance(db, _Snapshot):
+            original = db.original_rows
+        else:
+            # Migración/importación explícita: comparar contra el destino, no
+            # borrar indiscriminadamente. Se conserva la semántica de reemplazo.
+            state = _read_state(conn)
+            original = {table: {r["id"]: _row(table, r, hash_password=False)
+                                for r in state[table]} for table in TABLES}
+        changes = {}
+        removals = {}
         for table in TABLES:
-            conn.execute(f"DELETE FROM {table}")
-            for item in db.get(table, []):
-                row = dict(item) if isinstance(item, dict) else asdict(item)
-                if table == "users":
-                    row["password"] = _hash_pw(row["password"])
-                for key in JSON_FIELDS:
-                    if key in row and not isinstance(row[key], str):
-                        row[key] = json.dumps(row[key], ensure_ascii=False)
-                for key in BOOL_FIELDS:
-                    if key in row:
-                        row[key] = bool(row[key])
-                names = ",".join(row)
-                placeholders = ",".join("%s" for _ in row)
-                conn.execute(
-                    f"INSERT INTO {table} ({names}) VALUES ({placeholders})",
-                    list(row.values()),
-                )
+            rows = [_row(table, item) for item in db.get(table, [])]
+            current = {row["id"]: row for row in rows}
+            if len(current) != len(rows):
+                raise ValueError(f"Identificadores duplicados en {table}.")
+            before = original[table]
+            changes[table] = [row for key, row in current.items() if before.get(key) != row]
+            removals[table] = set(before) - set(current)
+            # Liberar únicamente claves naturales modificadas antes de insertar
+            # sus nuevos valores (p.ej. reemplazar una evaluación oficial).
+            keys = {"evaluaciones": ("evento_id", "club_id", "oficial"),
+                    "evento_club": ("evento_id", "club_id")}.get(table, ())
+            if keys:
+                removals[table].update(row["id"] for row in changes[table]
+                    if row["id"] in before
+                    and any(before[row["id"]][key] != row[key] for key in keys))
+
+        if any(removals.values()) or any(changes.values()):
+            # Pipelining conserva el orden y la transacción pero evita esperar
+            # un viaje de red por cada tabla. Cada tabla se escribe en bloque.
+            with conn.pipeline():
+                for table in reversed(TABLES):
+                    if removals[table]:
+                        conn.execute(f"DELETE FROM {table} WHERE id = ANY(%s)",
+                                     (sorted(removals[table]),))
+                for table in TABLES:
+                    if not changes[table]:
+                        continue
+                    columns = list(changes[table][0])
+                    names = ",".join(columns)
+                    assignments = ",".join(f"{key}=EXCLUDED.{key}" for key in columns if key != "id")
+                    conn.execute(
+                        f"INSERT INTO {table} ({names}) "
+                        f"SELECT {names} FROM jsonb_populate_recordset(NULL::{table}, %s::jsonb) "
+                        f"ON CONFLICT (id) DO UPDATE SET {assignments}",
+                        (json.dumps(changes[table], ensure_ascii=False),),
+                    )
         if own:
             conn.commit()
     finally:

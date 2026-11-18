@@ -78,10 +78,18 @@ def _verificar_clave(guardada, clave):
 def _abrir_transaccion():
     """Recargar dentro del bloqueo evita notas duplicadas y estados obsoletos."""
     global DB
+    if request.endpoint in {None, "static"} and not request.path.startswith("/static/uploads/"):
+        return
+    if (request.method in {"GET", "HEAD"}
+            and request.endpoint in {"index", "login", "registro"}
+            and not session.get("user_id")):
+        return
     _db_lock.acquire()
     g.db_locked = True
     g.connection = store.connect()
-    store.begin(g.connection, write=request.method == "POST")
+    g.write_transaction = (request.method == "POST"
+                           and request.endpoint not in {"login", "staff_escanear_imagen"})
+    store.begin(g.connection, write=g.write_transaction)
     DB = store.load(g.connection)
     user = current_user()
     if request.path.startswith(("/admin", "/staff", "/director")):
@@ -105,7 +113,7 @@ CSRFProtect(app)
 def _confirmar_transaccion(response):
     conn = g.get("connection")
     if conn is not None:
-        if request.method == "POST" and response.status_code < 400:
+        if g.get("write_transaction") and response.status_code < 400:
             store.save(DB, conn)
             conn.commit()
         else:
