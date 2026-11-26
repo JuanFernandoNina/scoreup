@@ -43,6 +43,5 @@ criterios, notas, incidentes y penalizaciones en una aplicación con acceso por 
 ## Equipo
 
 - Juan Fernando Nina Cachi.
-- Axel Alberto Ticona Villegas.
 - Kevin Quispe Canaviri.
 - Erick Lanchimba Lanchimba.

@@ -1,12 +1,47 @@
-# ScoreUp — instalación y uso local
+# ScoreUp — Evaluación Final del Proyecto Integrador
 
-ScoreUp permite gestionar clubes, miembros, eventos, evaluaciones QR, incidentes, penalizaciones y rankings, con exportación a Excel/PDF y proyección de resultados.
+**ScoreUp** es un sistema web para gestionar clubes, miembros, eventos, evaluaciones QR, incidentes, penalizaciones y rankings, con exportación a Excel/PDF y proyección de resultados en pantalla. Una computadora ejecuta la aplicación con SQLite y atiende a tres roles: Administrador, Staff y Director de club.
+
+**Equipo:** Juan Fernando Nina Cachi · Kevin Quispe Canaviri · Erick Lanchimba Lanchimba  
+**Asignatura:** Taller de Programación · **Docente:** Victor Hugo Sarzuri Flores  
+**Entrega:** 27 de noviembre de 2026 · **Repositorio:** https://github.com/JuanFernandoNina/scoreup  
+**Documento final:** [Evaluación por criterios](documents/DOCUMENTO_FINAL_EVALUACION.md)
+
+> **Instalación mínima:** instala **Python 3.12**, crea `.venv`, ejecuta `pip install -r requirements-local.txt` y abre **`INICIAR.bat`**. La aplicación queda en **http://localhost:5000**. Los pasos completos están en la sección 1.
 
 **Puedes usarlo sin internet después de instalarlo.** Una computadora guarda los datos en SQLite y sirve la aplicación al navegador. Los celulares se conectan a esa computadora por Wi-Fi local: no necesitan datos móviles, Vercel ni Supabase.
 
 > Descarga el proyecto, Python y las dependencias **antes** de salir a un lugar sin señal. Descargar únicamente el ZIP de GitHub no incluye Python ni los paquetes necesarios. La copia local no descarga ni sincroniza automáticamente los datos de la web pública.
 
-![Panel de ScoreUp](image/dashboard-admin.png)
+## Criterios de evaluación
+
+| Criterio | Puntaje | Evidencia en este repositorio |
+|---|---:|---|
+| 1. Presentación y Documento Final | 15 | Este README y el [documento final por criterios](documents/DOCUMENTO_FINAL_EVALUACION.md). |
+| 2. Funcionamiento del Sistema en Vivo (MVP) | 30 | Capturas siguientes, [guía de prueba con QR](documents/GUIA_PRUEBAS_QR.md) e instrucciones de instalación. |
+| 3. Arquitectura, SOLID y Patrones | 15 | Sección de arquitectura del [documento final](documents/DOCUMENTO_FINAL_EVALUACION.md) y [diagramas del flujo QR](documents/DIAGRAMA_QR.md). |
+| 4. Uso Crítico de IA y Calidad Técnica | 15 | Sección de IA y calidad del [documento final](documents/DOCUMENTO_FINAL_EVALUACION.md), pruebas en `tests/` y guías técnicas. |
+| 5. Defensa Oral y Ronda de Preguntas | 25 | Guion y preguntas probables en el [documento final](documents/DOCUMENTO_FINAL_EVALUACION.md). |
+
+## Capturas del sistema
+
+Las imágenes se generaron con datos ficticios en una base temporal; no modifican la base de la instalación local.
+
+### Portada
+
+![Portada de ScoreUp](image/landing-page.png)
+
+### Panel del Administrador
+
+![Panel del Administrador](image/dashboard-admin.png)
+
+### Panel del Staff
+
+![Panel del Staff](image/dashboard-staff.png)
+
+### Panel del Director
+
+![Panel del Director](image/dashboard-director.png)
 
 ## 1. Descargar el proyecto
 
@@ -184,6 +219,8 @@ Para restaurar, con el servidor detenido coloca esos mismos archivos en la misma
 
 ## Otras opciones
 
+- **Documento final:** [evaluación por los cinco criterios](documents/DOCUMENTO_FINAL_EVALUACION.md).
+
 - **Docker:** [guía de instalación, persistencia y uso](documents/DOCKER.md). Con Docker Desktop instalado: `docker compose up -d --build`; abre `http://localhost:5001` y registra tu organización. Construye/descarga la imagen con internet antes del campamento. No uses `docker compose down -v`: elimina el volumen de datos.
 - **Web pública:** [Vercel + Supabase](documents/VERCEL.md). Requiere internet; no es necesaria para los pasos locales anteriores.
 - **Pruebas:** `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` usa bases temporales y no modifica la tuya.
@@ -193,6 +230,6 @@ El servidor integrado es para uso académico en redes locales de confianza, no p
 
 ## Equipo
 
-Juan Fernando Nina Cachi · Axel Alberto Ticona Villegas · Kevin Quispe Canaviri · Erick Lanchimba Lanchimba.
+Juan Fernando Nina Cachi · Kevin Quispe Canaviri · Erick Lanchimba Lanchimba.
 
 Proyecto académico de Taller de Programación. Uso educativo, sin fines comerciales.
