@@ -5,6 +5,7 @@
 **Equipo:** Juan Fernando Nina Cachi · Kevin Quispe Canaviri · Erick Lanchimba Lanchimba  
 **Asignatura:** Taller de Programación · **Docente:** Victor Hugo Sarzuri Flores  
 **Entrega:** 27 de noviembre de 2026 · **Repositorio:** https://github.com/JuanFernandoNina/scoreup  
+**Demo pública:** https://scoreup-beta.vercel.app/  
 **Documento final:** [Evaluación por criterios](documents/DOCUMENTO_FINAL_EVALUACION.md)
 
 > **Instalación mínima:** instala **Python 3.12**, crea `.venv`, ejecuta `pip install -r requirements-local.txt` y abre **`INICIAR.bat`**. La aplicación queda en **http://localhost:5000**. Los pasos completos están en la sección 1.
@@ -222,7 +223,7 @@ Para restaurar, con el servidor detenido coloca esos mismos archivos en la misma
 - **Documento final:** [evaluación por los cinco criterios](documents/DOCUMENTO_FINAL_EVALUACION.md).
 
 - **Docker:** [guía de instalación, persistencia y uso](documents/DOCKER.md). Con Docker Desktop instalado: `docker compose up -d --build`; abre `http://localhost:5001` y registra tu organización. Construye/descarga la imagen con internet antes del campamento. No uses `docker compose down -v`: elimina el volumen de datos.
-- **Web pública:** [Vercel + Supabase](documents/VERCEL.md). Requiere internet; no es necesaria para los pasos locales anteriores.
+- **Web pública:** [https://scoreup-beta.vercel.app/](https://scoreup-beta.vercel.app/) — Vercel + Supabase. Requiere internet; no es necesaria para los pasos locales anteriores. Guía técnica: [Vercel + Supabase](documents/VERCEL.md).
 - **Pruebas:** `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` usa bases temporales y no modifica la tuya.
 - **Desarrollo de estilos:** los CSS ya están compilados. Solo al modificar clases Tailwind: `npm exec --yes --package=tailwindcss@3.4.17 -- tailwindcss -i static/admin-utilities.src.css -o static/app-utilities.css --content './templates/**/*.html' --minify`. El layout Admin tiene además su compilación `admin-utilities.css`.
 
