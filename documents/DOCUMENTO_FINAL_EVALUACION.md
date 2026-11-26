@@ -213,18 +213,7 @@ El uso de IA no sustituyó la validación del equipo:
 
 ## Criterio 5 — Defensa Oral y Ronda de Preguntas (25 puntos)
 
-### 5.1 Guion de defensa
-
-**Bloque 1 — Presentación del problema y del equipo (2 minutos).**  
-Se presenta el contexto de evaluación manual de clubes, la pérdida de trazabilidad y los errores de cálculo. Se enuncia la solución: ScoreUp centraliza datos, calcula automáticamente y publica resultados por rol. Se menciona el repositorio y a los tres integrantes.
-
-**Bloque 2 — Demostración del MVP (4 minutos).**  
-Se muestra la portada, el panel del Administrador, la generación del QR, el escaneo y evaluación por el Staff, la corrección con aviso al Administrador y la proyección de resultados. Se destaca que todo funciona con una computadora y celulares conectados a la misma Wi-Fi, sin internet.
-
-**Bloque 3 — Arquitectura, IA y cierre (3 minutos).**  
-Se explica el monolito modular, la separación entre `app.py`, `calc.py`, `data.py`, `store.py` y los adaptadores de persistencia. Se mencionan los patrones aplicados y se aclara que Factory no se declara implementado. Se describe el uso crítico de IA con verificación mediante 76 pruebas y capturas con datos ficticios. Se cierra con las limitaciones declaradas y la utilidad del sistema en un campamento.
-
-### 5.2 Preguntas probables
+### 5.1 Preguntas probables
 
 | Pregunta | Respuesta breve |
 |---|---|
@@ -236,7 +225,7 @@ Se explica el monolito modular, la separación entre `app.py`, `calc.py`, `data.
 | ¿El sistema necesita internet para funcionar? | No en su modo local. Internet solo se necesita para descargar Python y dependencias antes del campamento o para usar las opciones opcionales Docker/cloud. |
 | ¿Cómo se cambia el backend de datos? | Configurando `SCOREUP_DB_BACKEND=postgres` y `DATABASE_URL`; `store.py` selecciona `pg_store` sin cambiar `calc.py` ni las rutas principales. |
 
-### 5.3 Evidencia para mostrar durante la defensa
+### 5.2 Evidencia para mostrar durante la defensa
 
 - Portada del proyecto en navegador.
 - Panel del Administrador con clubes, eventos y tarjeta QR.
